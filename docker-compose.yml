@@ -1,0 +1,64 @@
+# Starts the whole shop with one command:   docker compose up -d --build
+# Stop it:                                    docker compose down
+# Stop it AND delete the database data:       docker compose down -v
+#
+# Three containers ("services") on one private network. Inside that network they reach
+# each other by service name, e.g. the backend connects to "postgres:5432".
+#
+#   http://localhost:3000                -> frontend (nginx)
+#   http://localhost:8080/swagger-ui.html -> backend API docs
+#   localhost:5432                       -> PostgreSQL (for JDBC tests, DBeaver, IntelliJ)
+
+services:
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: shoplab-postgres
+    environment:
+      POSTGRES_DB: shoplab
+      POSTGRES_USER: shoplab
+      POSTGRES_PASSWORD: shoplab
+    ports:
+      - "5432:5432"            # "host port : container port"
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # data survives container restarts
+    healthcheck:
+      # "Healthy" = the database accepts connections. The backend waits for this.
+      test: ["CMD-SHELL", "pg_isready -U shoplab -d shoplab"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    container_name: shoplab-backend
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/shoplab
+      DB_USER: shoplab
+      DB_PASSWORD: shoplab
+      SHOPLAB_TEST_ENDPOINTS: "true"
+      SHOPLAB_CORS_ORIGINS: http://localhost:3000,http://frontend
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy   # don't start before the DB is ready
+    healthcheck:
+      # "Healthy" = Spring Boot is up and can talk to the DB. Tests and CI wait for this.
+      test: ["CMD-SHELL", "curl -fs http://localhost:8080/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+
+  frontend:
+    build: ./frontend
+    container_name: shoplab-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  pgdata:

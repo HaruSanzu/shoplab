@@ -1,0 +1,4 @@
+# Files Docker should NOT send into the build (faster builds, no stale artifacts).
+target/
+*.iml
+.idea/

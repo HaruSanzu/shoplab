@@ -1,0 +1,45 @@
+# Syntax ${NAME:default} = "use environment variable NAME, or the default if it is not set".
+# Locally the defaults are used; docker-compose.yml overrides them with environment variables.
+
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: shoplab-backend
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/shoplab}
+    username: ${DB_USER:shoplab}
+    password: ${DB_PASSWORD:shoplab}
+
+  jpa:
+    hibernate:
+      # Flyway owns the schema. Hibernate only CHECKS that entities match the tables
+      # and refuses to start if they don't. It never creates or changes tables itself.
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate.jdbc.time_zone: UTC
+
+  flyway:
+    # Needed by POST /api/test/reset, which wipes the DB and re-runs all migrations.
+    clean-disabled: false
+
+# Our own settings (see ShopLabProperties.java)
+shoplab:
+  # Enables /api/test/** endpoints. Fine for a training project, NEVER for a real shop.
+  test-endpoints-enabled: ${SHOPLAB_TEST_ENDPOINTS:true}
+  # Which websites may call this API from a browser (CORS). Comma separated.
+  cors-allowed-origins: ${SHOPLAB_CORS_ORIGINS:http://localhost:3000,http://localhost:5500,http://127.0.0.1:5500}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method

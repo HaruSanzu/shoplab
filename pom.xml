@@ -1,17 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Root "aggregator" POM.
+  It does not produce any code itself. It only lists the Maven sub-projects (modules)
+  of the monorepo, so that IntelliJ opens them all and `mvn verify` at the root builds them all.
+  Each module has its own pom.xml with its own dependencies.
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>cydeo</groupId>
-    <artifactId>shoplab</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <groupId>com.shoplab</groupId>
+    <artifactId>shoplab-root</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
-    <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
+    <modules>
+        <module>backend</module>
+        <!-- <module>tests</module>  added in step 3 -->
+    </modules>
 </project>

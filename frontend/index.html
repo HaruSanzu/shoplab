@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShopLab — QA Automation Practice Store</title>
+<style>
+  :root{
+    --ink:#1b1f24; --muted:#5f6b76; --line:#e3e6ea; --bg:#f3f4f6; --card:#fff;
+    --head:#14202b; --head2:#1f3040; --accent:#f2a93b; --accent-d:#d98f1f;
+    --brand:#0f8b8d; --brand-d:#0b6e70; --danger:#c62828; --ok:#2e7d32;
+    --radius:10px; --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 14px rgba(0,0,0,.05);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
+  a{color:var(--brand);text-decoration:none} a:hover{text-decoration:underline}
+  h1{font-size:26px;margin:0 0 16px} h2{font-size:19px;margin:0 0 12px} h3{font-size:15px;margin:18px 0 8px}
+  .hidden{display:none!important}
+  .muted{color:var(--muted)}
+
+  /* header */
+  .topbar{background:var(--head);color:#fff;display:flex;align-items:center;gap:18px;padding:10px 20px;position:sticky;top:0;z-index:20}
+  .logo{color:#fff;font-weight:800;font-size:24px;letter-spacing:-.5px;white-space:nowrap}
+  .logo span{color:var(--accent)} .logo:hover{text-decoration:none}
+  .search{flex:1;display:flex;border-radius:8px;overflow:hidden;max-width:820px}
+  .search select{border:0;background:#e9ecef;padding:0 10px;font-size:13px;max-width:150px}
+  .search input{flex:1;border:0;padding:10px 12px;font-size:15px;min-width:0}
+  .search button{border:0;background:var(--accent);padding:0 16px;cursor:pointer;font-size:17px}
+  .search button:hover{background:var(--accent-d)}
+  .nav{display:flex;align-items:center;gap:16px;white-space:nowrap}
+  .nav a,.nav .linkbtn{color:#fff;font-size:14px}
+  .cart-link{font-weight:700;position:relative;font-size:16px!important}
+  .badge{background:var(--accent);color:var(--head);border-radius:20px;padding:1px 7px;font-size:12px;font-weight:800;margin-left:2px}
+  .subbar{background:var(--head2);padding:7px 20px;display:flex;gap:18px;overflow-x:auto}
+  .subbar a{color:#dfe7ee;font-size:13.5px;white-space:nowrap}
+
+  main{flex:1;width:100%;max-width:1240px;margin:0 auto;padding:22px 20px 40px}
+
+  /* buttons & forms */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--accent-d);background:var(--accent);color:#1b1f24;font-weight:600;border-radius:20px;padding:8px 16px;cursor:pointer;font-size:14px}
+  .btn:hover{background:var(--accent-d)}
+  .btn:disabled{background:#e6e6e6;border-color:#ccc;color:#888;cursor:not-allowed}
+  .btn-secondary{background:#fff;border-color:#c9ced4} .btn-secondary:hover{background:#f2f4f6}
+  .btn-brand{background:var(--brand);border-color:var(--brand-d);color:#fff} .btn-brand:hover{background:var(--brand-d)}
+  .btn-danger{background:var(--danger);border-color:#a51f1f;color:#fff} .btn-danger:hover{background:#a51f1f}
+  .btn-block{width:100%} .btn-small{padding:5px 12px;font-size:13px}
+  .linkbtn{background:none;border:0;padding:0;color:var(--brand);cursor:pointer;font:inherit}
+  .linkbtn:hover{text-decoration:underline}
+  label{display:block;font-weight:600;font-size:13.5px;margin:12px 0 4px}
+  input[type=text],input[type=email],input[type=password],input[type=tel],input[type=number],input[type=search],select,textarea{width:100%;padding:9px 11px;border:1px solid #b9c0c7;border-radius:7px;font:inherit;background:#fff}
+  input:focus,select:focus,textarea:focus{outline:2px solid rgba(15,139,141,.35);border-color:var(--brand)}
+  .invalid{border-color:var(--danger)!important;background:#fff8f8!important}
+  .field-error{color:var(--danger);font-size:13px;min-height:0;margin-top:3px}
+  .field-error:empty{display:none}
+  .alert{border-radius:8px;padding:11px 14px;margin-bottom:14px;font-size:14px}
+  .alert.error{background:#fdecea;border:1px solid #f5c2c0;color:#8a1c1c}
+  .alert.info{background:#e8f4f4;border:1px solid #bfe0e0}
+  .check,.radio{display:flex;align-items:center;gap:8px;font-weight:500;margin:8px 0;cursor:pointer}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+
+  /* spinner */
+  .spinner{width:42px;height:42px;border:4px solid #d9dee3;border-top-color:var(--brand);border-radius:50%;animation:spin .8s linear infinite;margin:60px auto;grid-column:1/-1}
+  .spin-sm{width:14px;height:14px;border:2px solid rgba(0,0,0,.2);border-top-color:#1b1f24;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* catalog */
+  .catalog{display:grid;grid-template-columns:230px 1fr;gap:22px}
+  .filters{background:var(--card);border-radius:var(--radius);padding:6px 18px 18px;box-shadow:var(--shadow);align-self:start}
+  .filters ul{list-style:none;margin:0;padding:0}
+  .filters li{margin:5px 0}
+  .filters a{color:var(--ink);font-size:14px} .filters a.active{font-weight:800;color:var(--brand)}
+  .price-form{display:flex;gap:6px} .price-form input{padding:6px 8px}
+  .results-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+  .results-bar label{display:flex;align-items:center;gap:8px;margin:0;font-weight:500}
+  .results-bar select{width:auto}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;display:flex;flex-direction:column;gap:6px;position:relative}
+  .thumb{display:flex;align-items:center;justify-content:center;height:150px;border-radius:8px;font-size:64px;margin-bottom:4px}
+  .thumb:hover{text-decoration:none;filter:brightness(.97)}
+  .card .title{color:var(--ink);font-weight:600;line-height:1.3;min-height:40px}
+  .stars{color:#e8a317;letter-spacing:1px}
+  .price{font-size:21px;font-weight:700}
+  .card .btn{margin-top:auto}
+  .stock-low{color:#b25e00;font-size:13px;font-weight:600}
+  .wish{position:absolute;top:20px;right:20px;border:0;background:#fff;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:17px;box-shadow:var(--shadow);color:#c2185b}
+  .pager{display:flex;justify-content:center;gap:6px;margin-top:22px}
+  .pager button{min-width:36px;height:36px;border:1px solid #c9ced4;background:#fff;border-radius:7px;cursor:pointer}
+  .pager button.active{background:var(--head);color:#fff;border-color:var(--head)}
+  .pager button:disabled{opacity:.45;cursor:not-allowed}
+  .empty{text-align:center;padding:50px 20px;grid-column:1/-1}
+  .empty .big{font-size:54px}
+
+  /* product page */
+  .crumbs{font-size:13px;margin-bottom:14px;color:var(--muted)}
+  .product{display:grid;grid-template-columns:1.1fr 1.3fr .9fr;gap:26px;align-items:start}
+  .product .image{height:380px;font-size:150px;border-radius:var(--radius)}
+  .product h1{font-size:24px;margin-bottom:6px}
+  .buybox{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:10px}
+  .in-stock{color:var(--ok);font-weight:700} .out-stock{color:var(--danger);font-weight:700}
+  .tabs{margin-top:30px}
+  .tablist{display:flex;gap:4px;border-bottom:2px solid var(--line)}
+  .tablist button{border:0;background:none;padding:10px 16px;font:inherit;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+  .tablist button.active{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabpanel{background:var(--card);padding:20px;border-radius:0 0 var(--radius) var(--radius)}
+  .specs{border-collapse:collapse;width:100%;max-width:520px}
+  .specs td{padding:8px 10px;border-bottom:1px solid var(--line)} .specs td:first-child{font-weight:600;width:40%;background:#fafbfc}
+  .review{border-bottom:1px solid var(--line);padding:12px 0}
+  .review:last-child{border:0}
+  .review-form{max-width:520px;margin-top:18px}
+
+  /* cart */
+  .cart{display:grid;grid-template-columns:1fr 320px;gap:22px;align-items:start}
+  .cart-item{display:grid;grid-template-columns:100px 1fr auto;gap:16px;padding:16px 0;border-bottom:1px solid var(--line);align-items:center}
+  .cart-item .thumb{height:90px;font-size:44px;margin:0}
+  .cart-item .controls{display:flex;align-items:center;gap:12px;margin-top:8px}
+  .cart-item select{width:auto;padding:5px 8px}
+  .line{display:flex;justify-content:space-between;margin:6px 0}
+  .line.total{font-size:19px;font-weight:800;border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+  .discount{color:var(--ok)}
+  .promo{display:flex;gap:6px;margin-top:12px}
+
+  /* checkout */
+  .checkout{display:grid;grid-template-columns:1fr 340px;gap:22px;align-items:start}
+  .checkout form .panel{margin-bottom:18px}
+  .summary{position:sticky;top:120px}
+  .summary .mini{display:flex;justify-content:space-between;gap:10px;font-size:14px;margin:6px 0}
+
+  /* auth */
+  .auth{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;align-items:flex-start}
+  .auth-box{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px;width:380px;max-width:100%}
+  .auth-box .btn-block{margin-top:18px}
+  .pw{display:flex;gap:8px;align-items:center}
+  .test-users{background:var(--card);border-radius:var(--radius);padding:6px 20px 16px;width:380px;max-width:100%;border:1px dashed #b9c0c7;font-size:13.5px}
+  .test-users table{border-collapse:collapse;width:100%}
+  .test-users td{padding:5px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+  code{background:#eef1f4;padding:1px 5px;border-radius:4px;font-size:12.5px}
+
+  /* orders */
+  .order{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+  .order-head{background:#f0f2f2;padding:12px 18px;display:flex;gap:28px;flex-wrap:wrap;font-size:13px;align-items:center}
+  .order-head b{display:block;font-size:14px}
+  .order-body{padding:14px 18px}
+  .status{padding:3px 10px;border-radius:20px;font-weight:700;font-size:12.5px}
+  .status.processing{background:#fff3cd;color:#7a5a00} .status.cancelled{background:#fdecea;color:#8a1c1c}
+  .confirm-box{max-width:640px;margin:0 auto;text-align:center}
+  .confirm-box .big{font-size:60px}
+
+  /* toast & modal */
+  #toasts{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:8px;z-index:60}
+  .toast{background:var(--head);color:#fff;padding:12px 18px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.25);border-left:5px solid var(--ok);animation:pop .2s ease-out;max-width:340px}
+  .toast.error{border-left-color:#ff6b6b}
+  @keyframes pop{from{transform:translateY(10px);opacity:0}}
+  .modal{position:fixed;inset:0;background:rgba(10,15,20,.55);display:flex;align-items:center;justify-content:center;z-index:50}
+  .modal-box{background:#fff;border-radius:12px;padding:24px;width:380px;max-width:92vw}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+
+  footer{background:var(--head);color:#c7d1da;text-align:center;padding:22px;font-size:13px}
+  footer .linkbtn{color:var(--accent)}
+
+  @media (max-width:900px){
+    .catalog,.cart,.checkout,.product{grid-template-columns:1fr}
+    .topbar{flex-wrap:wrap} .search{order:3;flex-basis:100%}
+    .summary{position:static}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar" data-testid="header">
+  <a href="#/" class="logo" data-testid="logo">shop<span>lab</span></a>
+  <form class="search" id="searchForm" data-testid="search-form" role="search">
+    <select id="searchCategory" data-testid="search-category" aria-label="Search category"></select>
+    <input id="searchInput" type="search" placeholder="Search ShopLab" autocomplete="off" data-testid="search-input" aria-label="Search">
+    <button type="submit" id="searchButton" data-testid="search-button" aria-label="Search">🔍</button>
+  </form>
+  <nav class="nav" data-testid="nav">
+    <span id="account" data-testid="account"></span>
+    <a href="#/orders" data-testid="orders-link">Orders</a>
+    <a href="#/wishlist" data-testid="wishlist-link">♡ Wishlist <span class="badge" id="wishCount" data-testid="wishlist-count">0</span></a>
+    <a href="#/cart" class="cart-link" data-testid="cart-link">🛒 Cart <span class="badge" id="cartCount" data-testid="cart-count">0</span></a>
+  </nav>
+</header>
+<div class="subbar" id="subbar" data-testid="category-bar"></div>
+
+<main id="app" data-testid="page-content"></main>
+
+<div id="toasts" data-testid="toast-container" aria-live="polite"></div>
+
+<div id="modal" class="modal hidden" data-testid="modal" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <h2 id="modalTitle" data-testid="modal-title">Are you sure?</h2>
+    <p id="modalText" data-testid="modal-text"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="modalCancel" data-testid="modal-cancel">Cancel</button>
+      <button class="btn btn-danger" id="modalOk" data-testid="modal-confirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<footer data-testid="footer">
+  ShopLab is a demo store for practising test automation. No real orders, payments or products.
+  &nbsp;·&nbsp; <button class="linkbtn" data-action="reset-data" data-testid="reset-data">Reset store data</button>
+</footer>
+
+<script>
+/* =========================================================
+   DATA
+   ========================================================= */
+const CATEGORIES = ['Electronics','Books','Home','Sports','Toys','Fashion'];
+const PRODUCTS = [
+  {id:1,  title:'Wireless Headphones X200',  brand:'Sonora',   category:'Electronics', price:79.99,  rating:4.5, reviews:1284, stock:15, emoji:'🎧', color:'#e3edf7'},
+  {id:2,  title:'Smartwatch Pulse 3',         brand:'Tikko',    category:'Electronics', price:149.99, rating:4.2, reviews:842,  stock:8,  emoji:'⌚', color:'#ece6f5'},
+  {id:3,  title:'4K Action Camera',           brand:'Vistra',   category:'Electronics', price:199.00, rating:4.0, reviews:311,  stock:0,  emoji:'📷', color:'#e8ecef'},
+  {id:4,  title:'Bluetooth Speaker Mini',     brand:'Sonora',   category:'Electronics', price:34.99,  rating:4.6, reviews:2210, stock:40, emoji:'🔊', color:'#e2f3ef'},
+  {id:5,  title:'Mechanical Keyboard K87',    brand:'Keyforge', category:'Electronics', price:89.50,  rating:4.7, reviews:978,  stock:12, emoji:'⌨️', color:'#f1ece4'},
+  {id:6,  title:'USB-C Charger 65W',          brand:'Voltix',   category:'Electronics', price:29.99,  rating:4.4, reviews:3120, stock:100,emoji:'🔌', color:'#f6f0dc'},
+  {id:7,  title:'Selenium in Practice',       brand:'Bytepress',category:'Books',       price:39.99,  rating:4.8, reviews:156,  stock:25, emoji:'📗', color:'#e3f2e1'},
+  {id:8,  title:'Learning Java Step by Step', brand:'Bytepress',category:'Books',       price:24.99,  rating:4.3, reviews:402,  stock:30, emoji:'📘', color:'#e0ebf8'},
+  {id:9,  title:'BDD with Gherkin',           brand:'Bytepress',category:'Books',       price:19.99,  rating:4.1, reviews:88,   stock:18, emoji:'📙', color:'#faeadb'},
+  {id:10, title:'Mystery at Harbor Lane',     brand:'Inkwell',  category:'Books',       price:12.99,  rating:3.9, reviews:640,  stock:3,  emoji:'📕', color:'#f7e1e1'},
+  {id:11, title:'The Debugging Mindset',      brand:'Inkwell',  category:'Books',       price:27.50,  rating:4.4, reviews:204,  stock:9,  emoji:'📓', color:'#ecebe6'},
+  {id:12, title:'Coffee Maker Brew 12',       brand:'Hearth',   category:'Home',        price:59.99,  rating:4.3, reviews:1530, stock:20, emoji:'☕', color:'#efe5dc'},
+  {id:13, title:'LED Desk Lamp',              brand:'Lumo',     category:'Home',        price:22.49,  rating:4.5, reviews:719,  stock:35, emoji:'💡', color:'#fbf3d5'},
+  {id:14, title:'Ceramic Mug Set (4 pcs)',    brand:'Hearth',   category:'Home',        price:18.00,  rating:4.6, reviews:388,  stock:50, emoji:'🍵', color:'#e4f0ea'},
+  {id:15, title:'Robot Vacuum R5',            brand:'Cleanbot', category:'Home',        price:249.99, rating:4.1, reviews:960,  stock:2,  emoji:'🤖', color:'#e6e9ee'},
+  {id:16, title:'Yoga Mat Pro',               brand:'Flexa',    category:'Sports',      price:27.99,  rating:4.4, reviews:1102, stock:45, emoji:'🧘', color:'#e9e3f4'},
+  {id:17, title:'Running Shoes Velo',         brand:'Stride',   category:'Sports',      price:94.99,  rating:4.5, reviews:2045, stock:14, emoji:'👟', color:'#e1eef7'},
+  {id:18, title:'Adjustable Dumbbells 20kg',  brand:'Ironix',   category:'Sports',      price:129.00, rating:4.6, reviews:530,  stock:0,  emoji:'🏋️', color:'#eceff1'},
+  {id:19, title:'Water Bottle 1L',            brand:'Flexa',    category:'Sports',      price:14.99,  rating:4.2, reviews:870,  stock:60, emoji:'🧴', color:'#ddf1f6'},
+  {id:20, title:'Building Blocks 500 pcs',    brand:'Brixo',    category:'Toys',        price:39.99,  rating:4.7, reviews:1320, stock:22, emoji:'🧱', color:'#fbe4dc'},
+  {id:21, title:'Remote Control Car',         brand:'Zoomer',   category:'Toys',        price:54.99,  rating:4.0, reviews:415,  stock:11, emoji:'🏎️', color:'#fde8e8'},
+  {id:22, title:'Jigsaw Puzzle 1000',         brand:'Brixo',    category:'Toys',        price:16.99,  rating:4.3, reviews:299,  stock:16, emoji:'🧩', color:'#e3f1e6'},
+  {id:23, title:'Leather Wallet',             brand:'Northway', category:'Fashion',     price:32.00,  rating:4.4, reviews:690,  stock:27, emoji:'👛', color:'#f1e7de'},
+  {id:24, title:'Classic Sunglasses',         brand:'Northway', category:'Fashion',     price:45.00,  rating:3.8, reviews:233,  stock:19, emoji:'🕶️', color:'#e7e9ec'},
+  {id:25, title:'Winter Hoodie',              brand:'Stride',   category:'Fashion',     price:49.99,  rating:4.5, reviews:812,  stock:7,  emoji:'🧥', color:'#e2e7f3'}
+];
+PRODUCTS.forEach(p => {
+  p.description = `${p.title} by ${p.brand} is one of the most popular items in our ${p.category} department. ` +
+    `Built for everyday use, it combines solid quality with a fair price. Covered by a 30-day return policy and a 1-year warranty.`;
+  p.sku = 'SL-' + String(p.id).padStart(5, '0');
+});
+const SEED_REVIEWS = [
+  {author:'Alex M.',  rating:5, text:'Exactly as described. Fast delivery, would buy again.'},
+  {author:'Jordan K.',rating:4, text:'Good value for the money. Packaging could be better.'},
+  {author:'Sam R.',   rating:3, text:'Does the job, but nothing special.'}
+];
+const BUILTIN_USERS = [
+  {email:'standard@shoplab.test', password:'Password123', name:'Standard User'},
+  {email:'locked@shoplab.test',   password:'Password123', name:'Locked User', locked:true},
+  {email:'slow@shoplab.test',     password:'Password123', name:'Slow User',   slow:true}
+];
+const PROMO_CODES = { QA10:'10% off your order', FREESHIP:'Free standard shipping' };
+const COUNTRIES = ['United States','Canada','United Kingdom','Germany','Italy','Spain','France','Poland'];
+const PAGE_SIZE = 8;
+const FREE_SHIPPING_FROM = 5000; // cents
+const DECLINED_CARD = '4000000000000002';
+
+/* =========================================================
+   STATE (persisted in localStorage)
+   ========================================================= */
+const KEY = 'shoplab_';
+function load(k, d){ try{ const v = localStorage.getItem(KEY + k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }
+function save(k, v){ try{ localStorage.setItem(KEY + k, JSON.stringify(v)); } catch(e){} }
+const S = {
+  cart: load('cart', []), wishlist: load('wishlist', []), user: load('user', null),
+  users: load('users', []), orders: load('orders', []), promo: load('promo', null), reviews: load('reviews', {})
+};
+function persist(){ Object.keys(S).forEach(k => save(k, S[k])); }
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const app = $('#app');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cents = p => Math.round(p * 100);
+const money = c => '$' + (c / 100).toFixed(2);
+const byId = id => PRODUCTS.find(p => p.id === Number(id));
+const stars = r => '★'.repeat(Math.round(r)) + '☆'.repeat(5 - Math.round(r));
+const kebab = s => s.replace(/[A-Z]/g, m => '-' + m.toLowerCase());
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const allUsers = () => [...BUILTIN_USERS, ...S.users];
+const currentUser = () => S.user ? allUsers().find(u => u.email === S.user) || null : null;
+
+function navigate(hash){ if (location.hash === hash) router(); else location.hash = hash; }
+
+function toast(msg, type = 'success'){
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.setAttribute('data-testid', 'toast');
+  t.setAttribute('role', 'status');
+  t.textContent = msg;
+  $('#toasts').appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function confirmModal(text, {title = 'Are you sure?', ok = 'Confirm'} = {}){
+  return new Promise(resolve => {
+    const m = $('#modal');
+    $('#modalTitle').textContent = title;
+    $('#modalText').textContent = text;
+    $('#modalOk').textContent = ok;
+    m.classList.remove('hidden');
+    const done = v => { m.classList.add('hidden'); $('#modalOk').onclick = $('#modalCancel').onclick = null; resolve(v); };
+    $('#modalOk').onclick = () => done(true);
+    $('#modalCancel').onclick = () => done(false);
+  });
+}
+
+function setError(id, msg){
+  const input = document.getElementById(id), err = document.getElementById(id + 'Error');
+  if (input) input.classList.add('invalid');
+  if (err) err.textContent = msg;
+}
+function clearErrors(form){
+  $$('.invalid', form).forEach(el => el.classList.remove('invalid'));
+  $$('.field-error', form).forEach(el => el.textContent = '');
+}
+function field(id, label, type = 'text', value = '', placeholder = ''){
+  return `<label for="${id}">${label}</label>
+    <input id="${id}" name="${id}" type="${type}" value="${esc(value)}" placeholder="${esc(placeholder)}" data-testid="${kebab(id)}-input">
+    <div class="field-error" id="${id}Error" data-testid="${kebab(id)}-error"></div>`;
+}
+
+function totals(delivery = 'standard'){
+  let sub = 0, count = 0;
+  S.cart.forEach(it => { const p = byId(it.id); if (p){ sub += cents(p.price) * it.qty; count += it.qty; } });
+  const discount = S.promo === 'QA10' ? Math.round(sub * 0.10) : 0;
+  let shipping;
+  if (sub === 0) shipping = 0;
+  else if (delivery === 'express') shipping = 999;
+  else shipping = (S.promo === 'FREESHIP' || sub - discount >= FREE_SHIPPING_FROM) ? 0 : 599;
+  return {sub, discount, shipping, total: sub - discount + shipping, count};
+}
+
+function addToCart(id, qty = 1){
+  const p = byId(id);
+  if (!p || p.stock === 0){ toast('This item is out of stock', 'error'); return false; }
+  const item = S.cart.find(i => i.id === p.id);
+  const have = item ? item.qty : 0;
+  if (have + qty > p.stock){ toast(`Only ${p.stock} item(s) available in stock`, 'error'); return false; }
+  if (item) item.qty += qty; else S.cart.push({id: p.id, qty});
+  persist(); updateHeader();
+  toast(`Added to cart: ${p.title}`);
+  return true;
+}
+
+function toggleWish(id){
+  const i = S.wishlist.indexOf(id);
+  if (i >= 0){ S.wishlist.splice(i, 1); toast('Removed from wishlist'); }
+  else { S.wishlist.push(id); toast('Added to wishlist'); }
+  persist(); updateHeader();
+  const on = S.wishlist.includes(id);
+  $$(`[data-action="toggle-wish"][data-id="${id}"]`).forEach(b => {
+    b.classList.toggle('on', on);
+    b.textContent = b.dataset.label ? (on ? '♥ In wishlist' : '♡ Add to wishlist') : (on ? '♥' : '♡');
+  });
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+function initHeader(){
+  $('#searchCategory').innerHTML = `<option value="">All</option>` + CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+  $('#subbar').innerHTML = `<a href="#/" data-testid="nav-all">All products</a>` +
+    CATEGORIES.map(c => `<a href="#/search?cat=${c}" data-testid="nav-${c.toLowerCase()}">${c}</a>`).join('') +
+    `<a href="#/search?sort=rating" data-testid="nav-top-rated">Top rated</a>`;
+  $('#searchForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const p = new URLSearchParams();
+    const q = $('#searchInput').value.trim(), cat = $('#searchCategory').value;
+    if (q) p.set('q', q);
+    if (cat) p.set('cat', cat);
+    navigate('#/search?' + p.toString());
+  });
+}
+function updateHeader(){
+  const t = totals();
+  $('#cartCount').textContent = t.count;
+  $('#wishCount').textContent = S.wishlist.length;
+  const u = currentUser();
+  $('#account').innerHTML = u
+    ? `<span data-testid="greeting">Hello, ${esc(u.name.split(' ')[0])}</span> &nbsp;<button class="linkbtn" data-action="logout" data-testid="logout-button">Sign out</button>`
+    : `<a href="#/login" data-testid="login-link">Hello, sign in</a>`;
+}
+
+/* =========================================================
+   ROUTER
+   ========================================================= */
+function parseHash(){
+  const h = location.hash.slice(1) || '/';
+  const [path, qs] = h.split('?');
+  return {parts: path.split('/').filter(Boolean), params: new URLSearchParams(qs || '')};
+}
+function router(){
+  const {parts, params} = parseHash();
+  window.scrollTo(0, 0);
+  renderToken++;
+  const route = parts[0] || '';
+  document.body.dataset.page = route || 'home';
+  switch (route){
+    case '': case 'search': renderCatalog(params); break;
+    case 'product':  renderProduct(parts[1]); break;
+    case 'cart':     renderCart(); break;
+    case 'login':    renderLogin(params); break;
+    case 'register': renderRegister(params); break;
+    case 'checkout': if (requireAuth('checkout')) renderCheckout(); break;
+    case 'order':    if (requireAuth('orders')) renderOrderConfirmation(parts[1]); break;
+    case 'orders':   if (requireAuth('orders')) renderOrders(); break;
+    case 'wishlist': renderWishlist(); break;
+    default:         renderNotFound();
+  }
+  updateHeader();
+}
+function requireAuth(redirect){
+  if (currentUser()) return true;
+  toast('Please sign in to continue', 'error');
+  navigate('#/login?redirect=' + encodeURIComponent(redirect));
+  return false;
+}
+
+/* =========================================================
+   CATALOG
+   ========================================================= */
+let renderToken = 0;
+function hashWith(params, updates){
+  const p = new URLSearchParams(params);
+  Object.entries(updates).forEach(([k, v]) => (v === '' || v == null) ? p.delete(k) : p.set(k, v));
+  if (!('page' in updates)) p.delete('page');
+  const s = p.toString();
+  return '#/search' + (s ? '?' + s : '');
+}
+function filterProducts(params){
+  const q = (params.get('q') || '').trim().toLowerCase();
+  const cat = params.get('cat') || '';
+  const min = parseFloat(params.get('min')), max = parseFloat(params.get('max'));
+  const rating = parseFloat(params.get('rating')) || 0;
+  const inStock = params.get('stock') === '1';
+  const list = PRODUCTS.filter(p =>
+    (!q || [p.title, p.brand, p.category].some(s => s.toLowerCase().includes(q))) &&
+    (!cat || p.category === cat) &&
+    (isNaN(min) || p.price >= min) && (isNaN(max) || p.price <= max) &&
+    p.rating >= rating && (!inStock || p.stock > 0));
+  const sorters = {
+    'price-asc':  (a, b) => a.price - b.price,
+    'price-desc': (a, b) => b.price - a.price,
+    'rating':     (a, b) => b.rating - a.rating || b.reviews - a.reviews,
+    'name':       (a, b) => a.title.localeCompare(b.title),
+    'featured':   (a, b) => a.id - b.id
+  };
+  return list.sort(sorters[params.get('sort')] || sorters.featured);
+}
+function productCard(p){
+  const on = S.wishlist.includes(p.id);
+  return `<article class="card" data-testid="product-card" data-product-id="${p.id}">
+    <button class="wish ${on ? 'on' : ''}" data-action="toggle-wish" data-id="${p.id}" data-testid="wishlist-toggle" aria-label="Toggle wishlist">${on ? '♥' : '♡'}</button>
+    <a href="#/product/${p.id}" class="thumb" style="background:${p.color}" data-testid="product-image" aria-label="${esc(p.title)}">${p.emoji}</a>
+    <a href="#/product/${p.id}" class="title" data-testid="product-title">${esc(p.title)}</a>
+    <div data-testid="product-rating" data-rating="${p.rating}"><span class="stars">${stars(p.rating)}</span> <span class="muted">(${p.reviews.toLocaleString('en-US')})</span></div>
+    <div class="price" data-testid="product-price">${money(cents(p.price))}</div>
+    ${p.stock > 0 && p.stock <= 3 ? `<div class="stock-low" data-testid="low-stock">Only ${p.stock} left in stock</div>` : ''}
+    ${p.stock > 0
+      ? `<button class="btn" id="add-to-cart-${p.id}" data-action="add" data-id="${p.id}" data-testid="add-to-cart">Add to cart</button>`
+      : `<button class="btn" id="add-to-cart-${p.id}" disabled data-testid="add-to-cart">Out of stock</button>`}
+  </article>`;
+}
+function renderCatalog(params){
+  const token = renderToken;
+  const q = params.get('q') || '', cat = params.get('cat') || '', rating = params.get('rating') || '', sort = params.get('sort') || 'featured';
+  $('#searchInput').value = q;
+  $('#searchCategory').value = cat;
+  app.innerHTML = `
+  <div class="catalog">
+    <aside class="filters" data-testid="filters">
+      <h3>Department</h3>
+      <ul>${['', ...CATEGORIES].map(c => `<li><a href="${hashWith(params, {cat: c})}" class="${c === cat ? 'active' : ''}" data-testid="filter-category-${(c || 'all').toLowerCase()}">${c || 'All departments'}</a></li>`).join('')}</ul>
+      <h3>Customer rating</h3>
+      <ul>${['4', '3', '2'].map(r => `<li><a href="${hashWith(params, {rating: r})}" class="${r === rating ? 'active' : ''}" data-testid="filter-rating-${r}"><span class="stars">${stars(+r)}</span> &amp; up</a></li>`).join('')}
+        <li><a href="${hashWith(params, {rating: ''})}" class="${!rating ? 'active' : ''}" data-testid="filter-rating-any">Any rating</a></li></ul>
+      <h3>Price, $</h3>
+      <form id="priceForm" class="price-form" data-testid="price-filter" novalidate>
+        <input type="number" id="minPrice" placeholder="Min" value="${esc(params.get('min') || '')}" data-testid="min-price" aria-label="Minimum price">
+        <input type="number" id="maxPrice" placeholder="Max" value="${esc(params.get('max') || '')}" data-testid="max-price" aria-label="Maximum price">
+        <button class="btn btn-small" data-testid="apply-price">Go</button>
+      </form>
+      <div class="field-error" id="priceError" data-testid="price-error"></div>
+      <h3>Availability</h3>
+      <label class="check"><input type="checkbox" id="inStock" ${params.get('stock') === '1' ? 'checked' : ''} data-testid="filter-in-stock"> In stock only</label>
+      <h3></h3>
+      <button class="linkbtn" data-action="clear-filters" data-testid="clear-filters">Clear all filters</button>
+    </aside>
+    <section>
+      <div class="results-bar">
+        <div id="resultsSummary" data-testid="results-summary">Loading…</div>
+        <label>Sort by:
+          <select id="sortSelect" data-testid="sort-select">
+            <option value="featured">Featured</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="rating">Avg. Customer Review</option>
+            <option value="name">Name: A to Z</option>
+          </select>
+        </label>
+      </div>
+      <div id="grid" class="grid" data-testid="product-grid"><div class="spinner" data-testid="loading-spinner"></div></div>
+      <div id="pager" class="pager" data-testid="pagination"></div>
+    </section>
+  </div>`;
+  $('#sortSelect').value = sort;
+  $('#sortSelect').addEventListener('change', e => navigate(hashWith(params, {sort: e.target.value === 'featured' ? '' : e.target.value})));
+  $('#inStock').addEventListener('change', e => navigate(hashWith(params, {stock: e.target.checked ? '1' : ''})));
+  $('#priceForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const min = $('#minPrice').value.trim(), max = $('#maxPrice').value.trim();
+    $('#priceError').textContent = '';
+    if ((min && +min < 0) || (max && +max < 0)) { $('#priceError').textContent = 'Price cannot be negative'; return; }
+    if (min && max && +min > +max) { $('#priceError').textContent = 'Min price must be less than max price'; return; }
+    navigate(hashWith(params, {min, max}));
+  });
+
+  // simulated network delay — practise explicit waits
+  setTimeout(() => {
+    if (token !== renderToken) return;
+    const list = filterProducts(params);
+    const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+    const page = Math.min(Math.max(1, parseInt(params.get('page')) || 1), pages);
+    const slice = list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const from = list.length ? (page - 1) * PAGE_SIZE + 1 : 0, to = (page - 1) * PAGE_SIZE + slice.length;
+    $('#resultsSummary').innerHTML = list.length
+      ? `<span data-testid="results-range">${from}-${to}</span> of <b data-testid="results-count">${list.length}</b> results${q ? ` for <b data-testid="search-term">"${esc(q)}"</b>` : ''}${cat ? ` in <b>${esc(cat)}</b>` : ''}`
+      : `<b data-testid="results-count">0</b> results`;
+    $('#grid').innerHTML = slice.length ? slice.map(productCard).join('') : `
+      <div class="empty" data-testid="no-results"><div class="big">🔎</div>
+        <h2>No results found${q ? ` for "${esc(q)}"` : ''}</h2>
+        <p class="muted">Try checking your spelling or using more general terms.</p></div>`;
+    $('#pager').innerHTML = pages > 1 ? `
+      <button data-page="${page - 1}" ${page === 1 ? 'disabled' : ''} data-testid="page-prev">‹ Prev</button>
+      ${Array.from({length: pages}, (_, i) => `<button data-page="${i + 1}" class="${i + 1 === page ? 'active' : ''}" data-testid="page-${i + 1}" ${i + 1 === page ? 'aria-current="page"' : ''}>${i + 1}</button>`).join('')}
+      <button data-page="${page + 1}" ${page === pages ? 'disabled' : ''} data-testid="page-next">Next ›</button>` : '';
+    $$('#pager button').forEach(b => b.addEventListener('click', () => navigate(hashWith(params, {page: b.dataset.page}))));
+  }, 600);
+}
+
+/* =========================================================
+   PRODUCT PAGE
+   ========================================================= */
+function reviewsFor(id){ return [...(S.reviews[id] || []), ...SEED_REVIEWS]; }
+function reviewsHtml(id){
+  return reviewsFor(id).map(r => `<div class="review" data-testid="review">
+      <b data-testid="review-author">${esc(r.author)}</b> <span class="stars" data-testid="review-rating" data-rating="${r.rating}">${stars(r.rating)}</span>
+      <div data-testid="review-text">${esc(r.text)}</div></div>`).join('');
+}
+function renderProduct(id){
+  const p = byId(id);
+  if (!p) return renderNotFound();
+  const u = currentUser(), on = S.wishlist.includes(p.id);
+  const maxQty = Math.min(p.stock, 10);
+  app.innerHTML = `
+  <div class="crumbs" data-testid="breadcrumbs"><a href="#/">Home</a> › <a href="#/search?cat=${p.category}" data-testid="breadcrumb-category">${p.category}</a> › <span>${esc(p.title)}</span></div>
+  <div class="product" data-testid="product-details" data-product-id="${p.id}">
+    <div class="thumb image" style="background:${p.color}" data-testid="product-image">${p.emoji}</div>
+    <div>
+      <h1 data-testid="product-name">${esc(p.title)}</h1>
+      <div class="muted">Brand: <a href="#/search?q=${encodeURIComponent(p.brand)}" data-testid="product-brand">${p.brand}</a></div>
+      <div style="margin:8px 0"><span class="stars">${stars(p.rating)}</span> <span data-testid="product-rating">${p.rating}</span> · <span class="muted" data-testid="product-reviews-count">${p.reviews.toLocaleString('en-US')} ratings</span></div>
+      <hr style="border:0;border-top:1px solid var(--line)">
+      <div class="price" style="font-size:28px" data-testid="product-price">${money(cents(p.price))}</div>
+      <p>${esc(p.description)}</p>
+    </div>
+    <div class="buybox" data-testid="buy-box">
+      <div class="price" data-testid="buybox-price">${money(cents(p.price))}</div>
+      <div class="muted" style="font-size:13.5px">${cents(p.price) >= FREE_SHIPPING_FROM ? 'FREE delivery' : 'Free delivery on orders over $50'}</div>
+      ${p.stock > 0
+        ? `<div class="in-stock" data-testid="stock-status">In stock${p.stock <= 3 ? ` — only ${p.stock} left` : ''}</div>
+           <label for="qtySelect" style="margin:0">Quantity</label>
+           <select id="qtySelect" data-testid="quantity-select">${Array.from({length: maxQty}, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join('')}</select>
+           <button class="btn btn-block" data-action="add-qty" data-id="${p.id}" data-testid="add-to-cart">Add to cart</button>
+           <button class="btn btn-brand btn-block" data-action="buy-now" data-id="${p.id}" data-testid="buy-now">Buy now</button>`
+        : `<div class="out-stock" data-testid="stock-status">Currently unavailable</div>
+           <button class="btn btn-block" disabled data-testid="add-to-cart">Out of stock</button>`}
+      <button class="btn btn-secondary btn-block ${on ? 'on' : ''}" data-action="toggle-wish" data-label="1" data-id="${p.id}" data-testid="wishlist-toggle">${on ? '♥ In wishlist' : '♡ Add to wishlist'}</button>
+    </div>
+  </div>
+  <div class="tabs" data-testid="product-tabs">
+    <div class="tablist" role="tablist">
+      <button role="tab" class="active" data-action="tab" data-tab="desc" data-testid="tab-description">Description</button>
+      <button role="tab" data-action="tab" data-tab="specs" data-testid="tab-specs">Specifications</button>
+      <button role="tab" data-action="tab" data-tab="reviews" data-testid="tab-reviews">Reviews (<span id="reviewCount">${reviewsFor(p.id).length}</span>)</button>
+    </div>
+    <div class="tabpanel" id="tab-desc" data-testid="panel-description"><p>${esc(p.description)}</p><p>Product ID for automation: <code>${p.id}</code></p></div>
+    <div class="tabpanel hidden" id="tab-specs" data-testid="panel-specs">
+      <table class="specs" data-testid="specs-table">
+        <tr><td>Brand</td><td>${p.brand}</td></tr><tr><td>Category</td><td>${p.category}</td></tr>
+        <tr><td>SKU</td><td data-testid="product-sku">${p.sku}</td></tr><tr><td>In stock</td><td>${p.stock}</td></tr>
+        <tr><td>Warranty</td><td>1 year</td></tr></table>
+    </div>
+    <div class="tabpanel hidden" id="tab-reviews" data-testid="panel-reviews">
+      <div id="reviewList" data-testid="review-list">${reviewsHtml(p.id)}</div>
+      <form class="review-form" id="reviewForm" novalidate data-testid="review-form">
+        <h2>Write a review</h2>
+        <div class="alert info hidden" id="reviewSuccess" data-testid="review-success">Thank you! Your review has been published.</div>
+        ${field('reviewName', 'Your name', 'text', u ? u.name : '')}
+        <label for="reviewRating">Rating</label>
+        <select id="reviewRating" data-testid="review-rating-select"><option value="">Select…</option>${[5, 4, 3, 2, 1].map(n => `<option value="${n}">${n} star${n > 1 ? 's' : ''}</option>`).join('')}</select>
+        <div class="field-error" id="reviewRatingError" data-testid="review-rating-error"></div>
+        <label for="reviewText">Review</label>
+        <textarea id="reviewText" rows="4" maxlength="500" data-testid="review-text-input"></textarea>
+        <div class="field-error" id="reviewTextError" data-testid="review-text-error"></div>
+        <button class="btn" style="margin-top:12px" data-testid="submit-review">Submit review</button>
+      </form>
+    </div>
+  </div>`;
+  $('#reviewForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const f = e.target; clearErrors(f); $('#reviewSuccess').classList.add('hidden');
+    const name = $('#reviewName').value.trim(), rating = $('#reviewRating').value, text = $('#reviewText').value.trim();
+    let ok = true;
+    if (!name){ setError('reviewName', 'Name is required'); ok = false; }
+    if (!rating){ setError('reviewRating', 'Please select a rating'); ok = false; }
+    if (text.length < 10){ setError('reviewText', 'Review must be at least 10 characters'); ok = false; }
+    if (!ok) return;
+    (S.reviews[p.id] = S.reviews[p.id] || []).unshift({author: name, rating: +rating, text});
+    persist();
+    $('#reviewList').innerHTML = reviewsHtml(p.id);
+    $('#reviewCount').textContent = reviewsFor(p.id).length;
+    f.reset(); if (u) $('#reviewName').value = u.name;
+    $('#reviewSuccess').classList.remove('hidden');
+  });
+}
+
+/* =========================================================
+   CART
+   ========================================================= */
+function summaryLines(t){
+  return `
+    <div class="line"><span>Items (<span data-testid="summary-count">${t.count}</span>):</span><span data-testid="summary-subtotal">${money(t.sub)}</span></div>
+    ${t.discount ? `<div class="line discount"><span>Discount (QA10):</span><span data-testid="summary-discount">-${money(t.discount)}</span></div>` : ''}
+    <div class="line"><span>Shipping:</span><span data-testid="summary-shipping">${t.shipping ? money(t.shipping) : 'FREE'}</span></div>
+    <div class="line total"><span>Order total:</span><span data-testid="summary-total">${money(t.total)}</span></div>`;
+}
+function renderCart(){
+  if (!S.cart.length){
+    app.innerHTML = `<div class="panel empty" data-testid="empty-cart"><div class="big">🛒</div>
+      <h1>Your cart is empty</h1><p class="muted">Looks like you haven't added anything yet.</p>
+      <a class="btn" href="#/" data-testid="continue-shopping">Continue shopping</a></div>`;
+    return;
+  }
+  const t = totals();
+  app.innerHTML = `
+  <div class="cart">
+    <div class="panel" data-testid="cart-items">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h1 style="margin:0">Shopping Cart</h1>
+        <button class="linkbtn" data-action="clear-cart" data-testid="clear-cart">Remove all items</button>
+      </div>
+      ${S.cart.map(it => { const p = byId(it.id); return `
+      <div class="cart-item" data-testid="cart-item" data-product-id="${p.id}">
+        <a href="#/product/${p.id}" class="thumb" style="background:${p.color}">${p.emoji}</a>
+        <div>
+          <a href="#/product/${p.id}" data-testid="cart-item-title"><b>${esc(p.title)}</b></a>
+          <div class="in-stock" style="font-size:13px">In stock</div>
+          <div class="controls">
+            <label style="margin:0;font-weight:500">Qty:
+              <select data-change="qty" data-id="${p.id}" data-testid="cart-item-qty">${Array.from({length: Math.min(p.stock, 10)}, (_, i) => `<option value="${i + 1}" ${i + 1 === it.qty ? 'selected' : ''}>${i + 1}</option>`).join('')}</select>
+            </label>
+            <button class="linkbtn" data-action="remove" data-id="${p.id}" data-testid="cart-item-remove">Delete</button>
+            <button class="linkbtn" data-action="save-for-later" data-id="${p.id}" data-testid="cart-item-save">Save for later</button>
+          </div>
+        </div>
+        <div style="text-align:right"><div class="price" data-testid="cart-item-total">${money(cents(p.price) * it.qty)}</div>
+          <div class="muted" style="font-size:13px" data-testid="cart-item-price">${money(cents(p.price))} each</div></div>
+      </div>`; }).join('')}
+    </div>
+    <aside class="panel" data-testid="cart-summary">
+      ${t.sub < FREE_SHIPPING_FROM && S.promo !== 'FREESHIP' ? `<div class="alert info" data-testid="free-shipping-hint">Add <b>${money(FREE_SHIPPING_FROM - t.sub + t.discount)}</b> more for FREE shipping</div>` : `<div class="alert info" data-testid="free-shipping-hint">✔ Your order qualifies for FREE shipping</div>`}
+      ${summaryLines(t)}
+      <form class="promo" id="promoForm" novalidate data-testid="promo-form">
+        <input type="text" id="promoInput" placeholder="Promo code" data-testid="promo-input" value="${esc(S.promo || '')}" ${S.promo ? 'disabled' : ''}>
+        ${S.promo
+          ? `<button type="button" class="btn btn-secondary btn-small" data-action="remove-promo" data-testid="promo-remove">Remove</button>`
+          : `<button class="btn btn-secondary btn-small" data-testid="promo-apply">Apply</button>`}
+      </form>
+      <div class="field-error" id="promoError" data-testid="promo-error"></div>
+      ${S.promo ? `<div class="discount" style="font-size:13px;margin-top:4px" data-testid="promo-success">Code ${S.promo} applied: ${PROMO_CODES[S.promo]}</div>` : ''}
+      <a class="btn btn-block" style="margin-top:16px" href="#/checkout" data-testid="checkout-button">Proceed to checkout</a>
+    </aside>
+  </div>`;
+  const pf = $('#promoForm');
+  pf.addEventListener('submit', e => {
+    e.preventDefault();
+    const code = $('#promoInput').value.trim().toUpperCase();
+    if (!code){ $('#promoError').textContent = 'Please enter a promo code'; return; }
+    if (!PROMO_CODES[code]){ $('#promoError').textContent = `Promo code "${code}" is not valid`; return; }
+    S.promo = code; persist(); toast('Promo code applied'); renderCart();
+  });
+}
+
+/* =========================================================
+   AUTH
+   ========================================================= */
+function renderLogin(params){
+  if (currentUser()){ navigate('#/'); return; }
+  app.innerHTML = `
+  <div class="auth">
+    <div class="auth-box">
+      <h1>Sign in</h1>
+      <div class="alert error hidden" id="loginError" data-testid="login-error" role="alert"></div>
+      <form id="loginForm" novalidate data-testid="login-form">
+        ${field('email', 'Email', 'email')}
+        <label for="password">Password</label>
+        <div class="pw"><input id="password" type="password" data-testid="password-input">
+          <button type="button" class="linkbtn" data-action="toggle-password" data-target="password" data-testid="toggle-password">Show</button></div>
+        <div class="field-error" id="passwordError" data-testid="password-error"></div>
+        <button class="btn btn-block" id="loginBtn" data-testid="login-button">Sign in</button>
+      </form>
+      <p style="margin-bottom:0">New to ShopLab? <a href="#/register${params.get('redirect') ? '?redirect=' + encodeURIComponent(params.get('redirect')) : ''}" data-testid="register-link">Create your account</a></p>
+    </div>
+    <div class="test-users" data-testid="test-users">
+      <h3>🧪 Test accounts</h3>
+      <table>
+        <tr><td><code>standard@shoplab.test</code></td><td>works normally</td></tr>
+        <tr><td><code>locked@shoplab.test</code></td><td>account is locked</td></tr>
+        <tr><td><code>slow@shoplab.test</code></td><td>login takes 3 seconds</td></tr>
+      </table>
+      <p>Password for all: <code>Password123</code></p>
+      <h3>🏷 Promo codes</h3>
+      <p><code>QA10</code> — 10% off · <code>FREESHIP</code> — free shipping</p>
+      <h3>💳 Test cards</h3>
+      <p><code>4242 4242 4242 4242</code> — success<br><code>4000 0000 0000 0002</code> — declined</p>
+    </div>
+  </div>`;
+  $('#loginForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const f = e.target, box = $('#loginError');
+    clearErrors(f); box.classList.add('hidden');
+    const email = $('#email').value.trim(), pw = $('#password').value;
+    let ok = true;
+    if (!email){ setError('email', 'Email is required'); ok = false; }
+    else if (!EMAIL_RE.test(email)){ setError('email', 'Enter a valid email address'); ok = false; }
+    if (!pw){ setError('password', 'Password is required'); ok = false; }
+    if (!ok) return;
+    const u = allUsers().find(x => x.email.toLowerCase() === email.toLowerCase());
+    const btn = $('#loginBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spin-sm" data-testid="login-spinner"></span> Signing in…';
+    setTimeout(() => {
+      if (!document.body.contains(btn)) return;
+      btn.disabled = false; btn.textContent = 'Sign in';
+      const fail = msg => { box.textContent = msg; box.classList.remove('hidden'); };
+      if (!u || u.password !== pw) return fail('Invalid email or password');
+      if (u.locked) return fail('Sorry, this account has been locked. Please contact support.');
+      S.user = u.email; persist();
+      toast(`Welcome back, ${u.name}!`);
+      navigate('#/' + (params.get('redirect') || ''));
+    }, u && u.slow ? 3000 : 400);
+  });
+}
+
+function renderRegister(params){
+  if (currentUser()){ navigate('#/'); return; }
+  app.innerHTML = `
+  <div class="auth"><div class="auth-box">
+    <h1>Create account</h1>
+    <form id="registerForm" novalidate data-testid="register-form">
+      ${field('regName', 'Your name')}
+      ${field('regEmail', 'Email', 'email')}
+      ${field('regPassword', 'Password', 'password', '', 'At least 8 characters')}
+      <div class="muted" style="font-size:12.5px">Min. 8 characters, one uppercase letter and one digit.</div>
+      ${field('regConfirm', 'Re-enter password', 'password')}
+      <label class="check"><input type="checkbox" id="regTerms" data-testid="reg-terms-checkbox"> I agree to the Terms of Use</label>
+      <div class="field-error" id="regTermsError" data-testid="reg-terms-error"></div>
+      <button class="btn btn-block" data-testid="register-button">Create your ShopLab account</button>
+    </form>
+    <p style="margin-bottom:0">Already have an account? <a href="#/login" data-testid="login-link-from-register">Sign in</a></p>
+  </div></div>`;
+  $('#registerForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const f = e.target; clearErrors(f);
+    const name = $('#regName').value.trim(), email = $('#regEmail').value.trim(), pw = $('#regPassword').value, pw2 = $('#regConfirm').value;
+    let ok = true;
+    if (!name){ setError('regName', 'Name is required'); ok = false; }
+    else if (name.length < 2){ setError('regName', 'Name must be at least 2 characters'); ok = false; }
+    if (!email){ setError('regEmail', 'Email is required'); ok = false; }
+    else if (!EMAIL_RE.test(email)){ setError('regEmail', 'Enter a valid email address'); ok = false; }
+    else if (allUsers().some(u => u.email.toLowerCase() === email.toLowerCase())){ setError('regEmail', 'An account with this email already exists'); ok = false; }
+    if (!pw){ setError('regPassword', 'Password is required'); ok = false; }
+    else if (pw.length < 8 || !/[A-Z]/.test(pw) || !/\d/.test(pw)){ setError('regPassword', 'Password must be at least 8 characters and contain an uppercase letter and a digit'); ok = false; }
+    if (pw && pw2 !== pw){ setError('regConfirm', 'Passwords do not match'); ok = false; }
+    if (!$('#regTerms').checked){ setError('regTerms', 'You must accept the Terms of Use'); ok = false; }
+    if (!ok) return;
+    S.users.push({email, password: pw, name});
+    S.user = email; persist();
+    toast('Account created successfully');
+    navigate('#/' + (params.get('redirect') || ''));
+  });
+}
+
+/* =========================================================
+   CHECKOUT
+   ========================================================= */
+function renderCheckout(){
+  if (!S.cart.length){ navigate('#/cart'); return; }
+  const u = currentUser();
+  app.innerHTML = `
+  <h1>Checkout</h1>
+  <div class="alert error hidden" id="checkoutError" data-testid="checkout-error" role="alert"></div>
+  <div class="checkout">
+    <form id="checkoutForm" novalidate data-testid="checkout-form">
+      <section class="panel" data-testid="shipping-section">
+        <h2>1. Shipping address</h2>
+        ${field('fullName', 'Full name', 'text', u.name)}
+        ${field('address', 'Street address', 'text', '', 'Street and house number')}
+        <div class="row2"><div>${field('city', 'City')}</div><div>${field('zip', 'ZIP code', 'text', '', '12345')}</div></div>
+        <label for="country">Country</label>
+        <select id="country" data-testid="country-select"><option value="">Select a country</option>${COUNTRIES.map(c => `<option>${c}</option>`).join('')}</select>
+        <div class="field-error" id="countryError" data-testid="country-error"></div>
+        ${field('phone', 'Phone number', 'tel', '', '+1 555 123 4567')}
+      </section>
+      <section class="panel" data-testid="delivery-section">
+        <h2>2. Delivery</h2>
+        <label class="radio"><input type="radio" name="delivery" value="standard" checked data-testid="delivery-standard"> Standard (5–7 business days)</label>
+        <label class="radio"><input type="radio" name="delivery" value="express" data-testid="delivery-express"> Express (1–2 business days) — $9.99</label>
+      </section>
+      <section class="panel" data-testid="payment-section">
+        <h2>3. Payment</h2>
+        <label class="radio"><input type="radio" name="payment" value="card" checked data-testid="payment-card"> Credit / debit card</label>
+        <label class="radio"><input type="radio" name="payment" value="cod" data-testid="payment-cod"> Cash on delivery</label>
+        <div id="cardFields" data-testid="card-fields">
+          ${field('cardNumber', 'Card number', 'text', '', '4242 4242 4242 4242')}
+          <div class="row2"><div>${field('expiry', 'Expiry date', 'text', '', 'MM/YY')}</div><div>${field('cvv', 'CVV', 'password', '', '123')}</div></div>
+        </div>
+      </section>
+    </form>
+    <aside class="panel summary" data-testid="order-summary">
+      <h2>Order summary</h2>
+      ${S.cart.map(it => { const p = byId(it.id); return `<div class="mini" data-testid="summary-item"><span>${it.qty} × ${esc(p.title)}</span><span>${money(cents(p.price) * it.qty)}</span></div>`; }).join('')}
+      <div id="checkoutTotals"></div>
+      <button type="submit" form="checkoutForm" class="btn btn-block" id="placeOrder" style="margin-top:14px" data-testid="place-order">Place your order</button>
+      <p class="muted" style="font-size:12px">By placing your order you agree to ShopLab's (fake) conditions of use.</p>
+    </aside>
+  </div>`;
+  const form = $('#checkoutForm');
+  const delivery = () => form.querySelector('[name=delivery]:checked').value;
+  const payment = () => form.querySelector('[name=payment]:checked').value;
+  const refresh = () => { $('#checkoutTotals').innerHTML = summaryLines(totals(delivery())); $('#cardFields').classList.toggle('hidden', payment() !== 'card'); };
+  refresh();
+  form.addEventListener('change', refresh);
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    clearErrors(form);
+    const err = $('#checkoutError'); err.classList.add('hidden');
+    const v = id => $('#' + id).value.trim();
+    let ok = true;
+    if (v('fullName').length < 2){ setError('fullName', 'Please enter your full name'); ok = false; }
+    if (!v('address')){ setError('address', 'Address is required'); ok = false; }
+    if (!v('city')){ setError('city', 'City is required'); ok = false; }
+    if (!v('zip')){ setError('zip', 'ZIP code is required'); ok = false; }
+    else if (!/^\d{5}$/.test(v('zip'))){ setError('zip', 'ZIP code must be 5 digits'); ok = false; }
+    if (!v('country')){ setError('country', 'Please select a country'); ok = false; }
+    if (!v('phone')){ setError('phone', 'Phone number is required'); ok = false; }
+    else if (!/^\+?[\d\s-]{7,15}$/.test(v('phone'))){ setError('phone', 'Enter a valid phone number'); ok = false; }
+    const card = v('cardNumber').replace(/[\s-]/g, '');
+    if (payment() === 'card'){
+      if (!/^\d{16}$/.test(card)){ setError('cardNumber', 'Card number must be 16 digits'); ok = false; }
+      const m = v('expiry').match(/^(0[1-9]|1[0-2])\/(\d{2})$/);
+      if (!m){ setError('expiry', 'Use the format MM/YY'); ok = false; }
+      else { const now = new Date(); const exp = new Date(2000 + +m[2], +m[1], 1);
+        if (exp <= now){ setError('expiry', 'Your card has expired'); ok = false; } }
+      if (!/^\d{3}$/.test(v('cvv'))){ setError('cvv', 'CVV must be 3 digits'); ok = false; }
+    }
+    if (!ok){
+      err.textContent = 'Please correct the highlighted fields.'; err.classList.remove('hidden');
+      const first = $('.invalid', form); if (first) first.focus();
+      return;
+    }
+    const btn = $('#placeOrder');
+    btn.disabled = true; btn.innerHTML = '<span class="spin-sm" data-testid="order-spinner"></span> Processing payment…';
+    setTimeout(() => {
+      if (!document.body.contains(btn)) return;
+      if (payment() === 'card' && card === DECLINED_CARD){
+        btn.disabled = false; btn.textContent = 'Place your order';
+        err.textContent = 'Payment declined. Please use a different card.'; err.classList.remove('hidden');
+        window.scrollTo(0, 0);
+        return;
+      }
+      const t = totals(delivery());
+      const order = {
+        id: 'SL-' + (100000 + Math.floor(Math.random() * 900000)),
+        user: S.user, date: new Date().toISOString(), status: 'Processing',
+        items: S.cart.map(it => ({id: it.id, qty: it.qty, price: cents(byId(it.id).price)})),
+        totals: t, delivery: delivery(), payment: payment(), promo: S.promo,
+        address: {name: v('fullName'), address: v('address'), city: v('city'), zip: v('zip'), country: v('country'), phone: v('phone')}
+      };
+      S.orders.unshift(order); S.cart = []; S.promo = null; persist();
+      navigate('#/order/' + order.id);
+    }, 1500);
+  });
+}
+
+function renderOrderConfirmation(id){
+  const o = S.orders.find(x => x.id === id && x.user === S.user);
+  if (!o) return renderNotFound();
+  const eta = new Date(o.date); eta.setDate(eta.getDate() + (o.delivery === 'express' ? 2 : 7));
+  app.innerHTML = `
+  <div class="panel confirm-box" data-testid="order-confirmation">
+    <div class="big">✅</div>
+    <h1 data-testid="confirmation-title">Thank you, your order has been placed!</h1>
+    <p>Order number: <b data-testid="order-number">${o.id}</b></p>
+    <p>Total: <b data-testid="order-total">${money(o.totals.total)}</b> · Payment: ${o.payment === 'card' ? 'Card' : 'Cash on delivery'}</p>
+    <p>Ship to: <span data-testid="order-address">${esc(o.address.name)}, ${esc(o.address.address)}, ${esc(o.address.city)} ${esc(o.address.zip)}, ${esc(o.address.country)}</span></p>
+    <p>Estimated delivery: <b data-testid="order-eta">${eta.toLocaleDateString('en-US', {weekday: 'long', month: 'long', day: 'numeric'})}</b></p>
+    <p><a class="btn" href="#/orders" data-testid="view-orders">View your orders</a> &nbsp; <a class="btn btn-secondary" href="#/" data-testid="continue-shopping">Continue shopping</a></p>
+  </div>`;
+}
+
+/* =========================================================
+   ORDERS & WISHLIST
+   ========================================================= */
+function renderOrders(){
+  const list = S.orders.filter(o => o.user === S.user);
+  if (!list.length){
+    app.innerHTML = `<div class="panel empty" data-testid="no-orders"><div class="big">📦</div><h1>You have no orders yet</h1><a class="btn" href="#/">Start shopping</a></div>`;
+    return;
+  }
+  app.innerHTML = `<h1>Your orders</h1><div data-testid="orders-list">${list.map(o => `
+    <div class="order" data-testid="order" data-order-id="${o.id}">
+      <div class="order-head">
+        <div>ORDER PLACED<b>${new Date(o.date).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}</b></div>
+        <div>TOTAL<b data-testid="order-total">${money(o.totals.total)}</b></div>
+        <div>SHIP TO<b>${esc(o.address.name)}</b></div>
+        <div>ORDER #<b data-testid="order-number">${o.id}</b></div>
+        <div style="margin-left:auto"><span class="status ${o.status.toLowerCase()}" data-testid="order-status">${o.status}</span></div>
+      </div>
+      <div class="order-body">
+        ${o.items.map(it => { const p = byId(it.id); return `<div class="mini" data-testid="order-item">${p.emoji} <a href="#/product/${p.id}">${esc(p.title)}</a> × ${it.qty} — ${money(it.price * it.qty)}</div>`; }).join('')}
+        ${o.status === 'Processing' ? `<button class="btn btn-secondary btn-small" style="margin-top:10px" data-action="cancel-order" data-order="${o.id}" data-testid="cancel-order">Cancel order</button>` : ''}
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function renderWishlist(){
+  const items = S.wishlist.map(byId).filter(Boolean);
+  if (!items.length){
+    app.innerHTML = `<div class="panel empty" data-testid="empty-wishlist"><div class="big">♡</div><h1>Your wishlist is empty</h1><a class="btn" href="#/">Browse products</a></div>`;
+    return;
+  }
+  app.innerHTML = `<h1>Your wishlist</h1><div class="panel" data-testid="wishlist-items">${items.map(p => `
+    <div class="cart-item" data-testid="wishlist-item" data-product-id="${p.id}">
+      <a href="#/product/${p.id}" class="thumb" style="background:${p.color}">${p.emoji}</a>
+      <div><a href="#/product/${p.id}" data-testid="wishlist-item-title"><b>${esc(p.title)}</b></a>
+        <div class="${p.stock ? 'in-stock' : 'out-stock'}" style="font-size:13px">${p.stock ? 'In stock' : 'Out of stock'}</div>
+        <div class="controls">
+          <button class="btn btn-small" data-action="move-to-cart" data-id="${p.id}" ${p.stock ? '' : 'disabled'} data-testid="wishlist-move-to-cart">Move to cart</button>
+          <button class="linkbtn" data-action="remove-wish" data-id="${p.id}" data-testid="wishlist-remove">Remove</button>
+        </div></div>
+      <div class="price">${money(cents(p.price))}</div>
+    </div>`).join('')}</div>`;
+}
+
+function renderNotFound(){
+  app.innerHTML = `<div class="panel empty" data-testid="not-found"><div class="big">🐞</div><h1>404 — Page not found</h1>
+    <p class="muted">We couldn't find the page you were looking for.</p><a class="btn" href="#/" data-testid="go-home">Go to homepage</a></div>`;
+}
+
+/* =========================================================
+   GLOBAL EVENTS
+   ========================================================= */
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const id = Number(el.dataset.id);
+  switch (el.dataset.action){
+    case 'add': addToCart(id, 1); break;
+    case 'add-qty': addToCart(id, Number($('#qtySelect').value)); break;
+    case 'buy-now': if (addToCart(id, Number($('#qtySelect').value))) navigate('#/checkout'); break;
+    case 'toggle-wish': toggleWish(id); break;
+    case 'remove':
+      if (await confirmModal('Remove this item from your cart?', {ok: 'Remove'})){
+        S.cart = S.cart.filter(i => i.id !== id); persist(); toast('Item removed from cart'); renderCart(); updateHeader();
+      }
+      break;
+    case 'save-for-later':
+      S.cart = S.cart.filter(i => i.id !== id);
+      if (!S.wishlist.includes(id)) S.wishlist.push(id);
+      persist(); toast('Moved to wishlist'); renderCart(); updateHeader();
+      break;
+    case 'clear-cart':
+      if (await confirmModal('Remove all items from your cart?', {ok: 'Remove all'})){
+        S.cart = []; S.promo = null; persist(); renderCart(); updateHeader();
+      }
+      break;
+    case 'remove-promo': S.promo = null; persist(); renderCart(); break;
+    case 'logout': S.user = null; persist(); toast('You have been signed out'); navigate('#/'); break;
+    case 'clear-filters': navigate('#/'); break;
+    case 'tab':
+      $$('.tablist button').forEach(b => b.classList.toggle('active', b === el));
+      $$('.tabpanel').forEach(p => p.classList.toggle('hidden', p.id !== 'tab-' + el.dataset.tab));
+      break;
+    case 'toggle-password': {
+      const inp = document.getElementById(el.dataset.target);
+      const show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password'; el.textContent = show ? 'Hide' : 'Show';
+      break;
+    }
+    case 'move-to-cart':
+      if (addToCart(id, 1)){ S.wishlist = S.wishlist.filter(x => x !== id); persist(); renderWishlist(); updateHeader(); }
+      break;
+    case 'remove-wish': S.wishlist = S.wishlist.filter(x => x !== id); persist(); renderWishlist(); updateHeader(); break;
+    case 'cancel-order': {
+      const o = S.orders.find(x => x.id === el.dataset.order);
+      if (o && await confirmModal(`Cancel order ${o.id}?`, {title: 'Cancel order', ok: 'Yes, cancel'})){
+        o.status = 'Cancelled'; persist(); toast(`Order ${o.id} has been cancelled`); renderOrders();
+      }
+      break;
+    }
+    case 'reset-data':
+      if (await confirmModal('This clears cart, wishlist, users, orders and reviews.', {title: 'Reset store data?', ok: 'Reset'})){
+        try { Object.keys(localStorage).filter(k => k.startsWith(KEY)).forEach(k => localStorage.removeItem(k)); } catch(err){}
+        Object.assign(S, {cart: [], wishlist: [], user: null, users: [], orders: [], promo: null, reviews: {}});
+        toast('Store data has been reset'); navigate('#/');
+      }
+      break;
+  }
+});
+document.addEventListener('change', e => {
+  if (e.target.dataset.change === 'qty'){
+    const it = S.cart.find(i => i.id === Number(e.target.dataset.id));
+    if (it){ it.qty = Number(e.target.value); persist(); renderCart(); updateHeader(); }
+  }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').classList.contains('hidden')) $('#modalCancel').click(); });
+
+window.addEventListener('hashchange', router);
+initHeader();
+router();
+</script>
+</body>
+</html>
