@@ -37,7 +37,8 @@ services:
       DB_USER: shoplab
       DB_PASSWORD: shoplab
       SHOPLAB_TEST_ENDPOINTS: "true"
-      SHOPLAB_CORS_ORIGINS: http://localhost:3000,http://frontend
+      # Websites allowed to call the API from a browser: Docker frontend + IntelliJ's built-in server
+      SHOPLAB_CORS_ORIGINS: http://localhost:3000,http://localhost:63342
     ports:
       - "8080:8080"
     depends_on:

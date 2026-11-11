@@ -17,8 +17,10 @@ It is a GitHub portfolio project of a learner becoming a QA Automation Engineer.
 
 ```
 shoplab/
-├── frontend/            Static website (single index.html + vanilla JS). Served by nginx in Docker.
+├── frontend/            Static website (single index.html + vanilla JS) that calls the API. nginx in Docker.
+│   ├── config.js        API base URL (window.SHOPLAB_CONFIG.apiUrl, default http://localhost:8080).
 │   └── README.md        Test data, routes and data-testid conventions of the UI.
+├── docs/                Step-by-step explanations in Russian (01-backend.md, 02-frontend-api.md, ...).
 ├── backend/             REST API: Java 21, Spring Boot 4, Spring Data JPA, PostgreSQL, Flyway.
 ├── tests/               (step 3+) Selenium + Cucumber + JUnit 5, REST Assured, JDBC, Allure.
 ├── docker-compose.yml   postgres + backend + frontend with one command.
@@ -73,6 +75,17 @@ then run `ShopLabApplication` with JDK 21. Defaults in `application.yml` point t
 - Status codes: 400 validation, 401 not logged in / bad credentials, 403 locked account,
   402 declined card, 404 not found (also for other users' orders), 409 business conflict (stock, state).
 
+## Frontend conventions
+
+- All data comes from the API through one function `api(method, path, body)` in `index.html`;
+  errors are `ApiError` objects with `status`, `message`, `fieldErrors`.
+- **No business rules in the frontend**: prices, discounts, shipping and the free-shipping hint come from the API
+  (`CartDto`). Guests' carts are stored in localStorage and priced via `POST /api/cart/preview`; on login they are
+  moved to the server cart. Client-side form validation stays (instant feedback), the server re-validates.
+- localStorage keys (`shoplab_` prefix): `token`, `guestCart`, `guestPromo`, `wishlist`, `reviews`.
+- **Never remove or rename a `data-testid`**; keep routes and UI texts stable (UI tests depend on them).
+- Minimum delays kept for wait practice: catalog 600 ms, login 400 ms, order 1500 ms (`DELAY` constant).
+
 ## API summary (`/api`)
 
 | Method | Path | Auth | Notes |
@@ -84,7 +97,8 @@ then run `ShopLabApplication` with JDK 21. Defaults in `application.yml` point t
 | POST | `/auth/login` | – | 401 bad creds, 403 locked, slow user = 3 s |
 | POST | `/auth/logout` | ✔ | 204, token invalidated |
 | GET | `/users/me` | ✔ | |
-| GET/DELETE | `/cart` | ✔ | DELETE empties cart |
+| GET/DELETE | `/cart` | ✔ | GET takes `deliveryMethod` (default STANDARD); DELETE empties cart |
+| POST | `/cart/preview` | – | `{items:[{productId, quantity}], promoCode?, deliveryMethod?}`: totals for a guest cart, nothing saved |
 | POST | `/cart/items` | ✔ | `{productId, quantity}` adds to existing qty, max 10 and ≤ stock |
 | PUT/DELETE | `/cart/items/{productId}` | ✔ | `{quantity}` |
 | POST/DELETE | `/cart/promo` | ✔ | `{code}`: QA10, FREESHIP |
@@ -106,9 +120,8 @@ then run `ShopLabApplication` with JDK 21. Defaults in `application.yml` point t
 
 - [x] **Step 1: Backend + PostgreSQL + docker-compose.** Products, users/auth, cart, orders; Flyway schema and seed
       data; Swagger UI; health check; test reset endpoint; Dockerfiles; compose with healthchecks.
-- [ ] **Step 2: Frontend → API.** Replace localStorage for products, auth, cart and orders with `fetch` calls to the
-      backend (API base URL configurable). Keep every `data-testid`, route and message unchanged. Wishlist and reviews
-      may stay in localStorage. Handle loading and error states.
+- [x] **Step 2: Frontend → API.** Products, auth, cart and orders via `fetch`; `config.js` for the API URL; guest cart
+      + `/api/cart/preview`; session expiry handling; API-unavailable page. All 170 original `data-testid`s kept.
 - [ ] **Step 3: `tests/` module skeleton + API tests.** Maven module with JUnit 5, REST Assured, AssertJ, Allure;
       config (base URLs via system properties/env); request specs, POJOs for bodies; tests for products, auth, cart,
       orders (positive + negative); reset DB before tests.
@@ -124,3 +137,7 @@ then run `ShopLabApplication` with JDK 21. Defaults in `application.yml` point t
 
 Always explain your changes in simple terms after each step,
 as if teaching a junior QA engineer. Reply in Russian.
+
+After each step, write a detailed explanation file in Russian to `docs/NN-<topic>.md`
+(e.g. `docs/01-backend.md`, `docs/02-frontend-api.md`): what was done and why, how it works,
+manual verification steps, problems met along the way, glossary of new terms. Use `docs/01-backend.md` as the template.

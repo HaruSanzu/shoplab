@@ -204,70 +204,102 @@
   &nbsp;·&nbsp; <button class="linkbtn" data-action="reset-data" data-testid="reset-data">Reset store data</button>
 </footer>
 
+<!-- Where the API lives. Edit config.js (not this file) to point the site at another backend. -->
+<script src="config.js"></script>
 <script>
 /* =========================================================
-   DATA
+   CONFIG
+   Products, users, cart and orders come from the backend REST API.
+   Only the wishlist, reviews, a guest's cart and the login token stay in localStorage.
    ========================================================= */
-const CATEGORIES = ['Electronics','Books','Home','Sports','Toys','Fashion'];
-const PRODUCTS = [
-  {id:1,  title:'Wireless Headphones X200',  brand:'Sonora',   category:'Electronics', price:79.99,  rating:4.5, reviews:1284, stock:15, emoji:'🎧', color:'#e3edf7'},
-  {id:2,  title:'Smartwatch Pulse 3',         brand:'Tikko',    category:'Electronics', price:149.99, rating:4.2, reviews:842,  stock:8,  emoji:'⌚', color:'#ece6f5'},
-  {id:3,  title:'4K Action Camera',           brand:'Vistra',   category:'Electronics', price:199.00, rating:4.0, reviews:311,  stock:0,  emoji:'📷', color:'#e8ecef'},
-  {id:4,  title:'Bluetooth Speaker Mini',     brand:'Sonora',   category:'Electronics', price:34.99,  rating:4.6, reviews:2210, stock:40, emoji:'🔊', color:'#e2f3ef'},
-  {id:5,  title:'Mechanical Keyboard K87',    brand:'Keyforge', category:'Electronics', price:89.50,  rating:4.7, reviews:978,  stock:12, emoji:'⌨️', color:'#f1ece4'},
-  {id:6,  title:'USB-C Charger 65W',          brand:'Voltix',   category:'Electronics', price:29.99,  rating:4.4, reviews:3120, stock:100,emoji:'🔌', color:'#f6f0dc'},
-  {id:7,  title:'Selenium in Practice',       brand:'Bytepress',category:'Books',       price:39.99,  rating:4.8, reviews:156,  stock:25, emoji:'📗', color:'#e3f2e1'},
-  {id:8,  title:'Learning Java Step by Step', brand:'Bytepress',category:'Books',       price:24.99,  rating:4.3, reviews:402,  stock:30, emoji:'📘', color:'#e0ebf8'},
-  {id:9,  title:'BDD with Gherkin',           brand:'Bytepress',category:'Books',       price:19.99,  rating:4.1, reviews:88,   stock:18, emoji:'📙', color:'#faeadb'},
-  {id:10, title:'Mystery at Harbor Lane',     brand:'Inkwell',  category:'Books',       price:12.99,  rating:3.9, reviews:640,  stock:3,  emoji:'📕', color:'#f7e1e1'},
-  {id:11, title:'The Debugging Mindset',      brand:'Inkwell',  category:'Books',       price:27.50,  rating:4.4, reviews:204,  stock:9,  emoji:'📓', color:'#ecebe6'},
-  {id:12, title:'Coffee Maker Brew 12',       brand:'Hearth',   category:'Home',        price:59.99,  rating:4.3, reviews:1530, stock:20, emoji:'☕', color:'#efe5dc'},
-  {id:13, title:'LED Desk Lamp',              brand:'Lumo',     category:'Home',        price:22.49,  rating:4.5, reviews:719,  stock:35, emoji:'💡', color:'#fbf3d5'},
-  {id:14, title:'Ceramic Mug Set (4 pcs)',    brand:'Hearth',   category:'Home',        price:18.00,  rating:4.6, reviews:388,  stock:50, emoji:'🍵', color:'#e4f0ea'},
-  {id:15, title:'Robot Vacuum R5',            brand:'Cleanbot', category:'Home',        price:249.99, rating:4.1, reviews:960,  stock:2,  emoji:'🤖', color:'#e6e9ee'},
-  {id:16, title:'Yoga Mat Pro',               brand:'Flexa',    category:'Sports',      price:27.99,  rating:4.4, reviews:1102, stock:45, emoji:'🧘', color:'#e9e3f4'},
-  {id:17, title:'Running Shoes Velo',         brand:'Stride',   category:'Sports',      price:94.99,  rating:4.5, reviews:2045, stock:14, emoji:'👟', color:'#e1eef7'},
-  {id:18, title:'Adjustable Dumbbells 20kg',  brand:'Ironix',   category:'Sports',      price:129.00, rating:4.6, reviews:530,  stock:0,  emoji:'🏋️', color:'#eceff1'},
-  {id:19, title:'Water Bottle 1L',            brand:'Flexa',    category:'Sports',      price:14.99,  rating:4.2, reviews:870,  stock:60, emoji:'🧴', color:'#ddf1f6'},
-  {id:20, title:'Building Blocks 500 pcs',    brand:'Brixo',    category:'Toys',        price:39.99,  rating:4.7, reviews:1320, stock:22, emoji:'🧱', color:'#fbe4dc'},
-  {id:21, title:'Remote Control Car',         brand:'Zoomer',   category:'Toys',        price:54.99,  rating:4.0, reviews:415,  stock:11, emoji:'🏎️', color:'#fde8e8'},
-  {id:22, title:'Jigsaw Puzzle 1000',         brand:'Brixo',    category:'Toys',        price:16.99,  rating:4.3, reviews:299,  stock:16, emoji:'🧩', color:'#e3f1e6'},
-  {id:23, title:'Leather Wallet',             brand:'Northway', category:'Fashion',     price:32.00,  rating:4.4, reviews:690,  stock:27, emoji:'👛', color:'#f1e7de'},
-  {id:24, title:'Classic Sunglasses',         brand:'Northway', category:'Fashion',     price:45.00,  rating:3.8, reviews:233,  stock:19, emoji:'🕶️', color:'#e7e9ec'},
-  {id:25, title:'Winter Hoodie',              brand:'Stride',   category:'Fashion',     price:49.99,  rating:4.5, reviews:812,  stock:7,  emoji:'🧥', color:'#e2e7f3'}
-];
-PRODUCTS.forEach(p => {
-  p.description = `${p.title} by ${p.brand} is one of the most popular items in our ${p.category} department. ` +
-    `Built for everyday use, it combines solid quality with a fair price. Covered by a 30-day return policy and a 1-year warranty.`;
-  p.sku = 'SL-' + String(p.id).padStart(5, '0');
-});
+const API_URL = (window.SHOPLAB_CONFIG && window.SHOPLAB_CONFIG.apiUrl) || 'http://localhost:8080';
+
+const PAGE_SIZE = 8;
+const MAX_QTY = 10;                  // max pieces of one product per order (the backend enforces it too)
+const FREE_SHIPPING_FROM = 50;       // only for the "FREE delivery" text on the product page
+const COUNTRIES = ['United States','Canada','United Kingdom','Germany','Italy','Spain','France','Poland'];
 const SEED_REVIEWS = [
   {author:'Alex M.',  rating:5, text:'Exactly as described. Fast delivery, would buy again.'},
   {author:'Jordan K.',rating:4, text:'Good value for the money. Packaging could be better.'},
   {author:'Sam R.',   rating:3, text:'Does the job, but nothing special.'}
 ];
-const BUILTIN_USERS = [
-  {email:'standard@shoplab.test', password:'Password123', name:'Standard User'},
-  {email:'locked@shoplab.test',   password:'Password123', name:'Locked User', locked:true},
-  {email:'slow@shoplab.test',     password:'Password123', name:'Slow User',   slow:true}
-];
-const PROMO_CODES = { QA10:'10% off your order', FREESHIP:'Free standard shipping' };
-const COUNTRIES = ['United States','Canada','United Kingdom','Germany','Italy','Spain','France','Poland'];
-const PAGE_SIZE = 8;
-const FREE_SHIPPING_FROM = 5000; // cents
-const DECLINED_CARD = '4000000000000002';
+
+/* Minimum durations, kept from the original site so tests can practise explicit waits. */
+const DELAY = {catalog: 600, login: 400, order: 1500};
 
 /* =========================================================
-   STATE (persisted in localStorage)
+   STATE
    ========================================================= */
 const KEY = 'shoplab_';
 function load(k, d){ try{ const v = localStorage.getItem(KEY + k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }
 function save(k, v){ try{ localStorage.setItem(KEY + k, JSON.stringify(v)); } catch(e){} }
 const S = {
-  cart: load('cart', []), wishlist: load('wishlist', []), user: load('user', null),
-  users: load('users', []), orders: load('orders', []), promo: load('promo', null), reviews: load('reviews', {})
+  // saved in localStorage (see persist)
+  token: load('token', null),          // login token from the API
+  guestCart: load('guestCart', []),    // [{id, qty}] — cart of a visitor who is not logged in
+  guestPromo: load('guestPromo', null),
+  wishlist: load('wishlist', []),
+  reviews: load('reviews', {}),
+  // only in memory
+  user: null,                          // {id, email, name} from GET /api/users/me
+  products: [],                        // all products, for the wishlist and guest cart
+  categories: [],
+  cartView: null                       // last cart received from the API (logged-in user)
 };
-function persist(){ Object.keys(S).forEach(k => save(k, S[k])); }
+function persist(){ ['token', 'guestCart', 'guestPromo', 'wishlist', 'reviews'].forEach(k => save(k, S[k])); }
+
+/* =========================================================
+   API CLIENT
+   One function for every request to the backend.
+   ========================================================= */
+class ApiError extends Error {
+  constructor(status, body){
+    super((body && body.message) || `Request failed (HTTP ${status})`);
+    this.status = status;                                  // HTTP status, 0 = server not reachable
+    this.fieldErrors = (body && body.fieldErrors) || {};   // {"shippingAddress.zip": "ZIP code must be 5 digits"}
+    this.handled = false;                                  // true = the user was already told about it
+  }
+}
+
+async function api(method, path, body, {redirectOn401 = true} = {}){
+  const headers = {};
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (S.token) headers['Authorization'] = 'Bearer ' + S.token;
+
+  let res;
+  try {
+    res = await fetch(API_URL + path, {method, headers, body: body === undefined ? undefined : JSON.stringify(body)});
+  } catch (networkError){
+    // fetch only throws when there is no answer at all: backend down, wrong URL, CORS blocked
+    throw new ApiError(0, {message: `Cannot connect to the ShopLab API (${API_URL}). Is the backend running?`});
+  }
+
+  const data = res.status === 204 ? null : await res.json().catch(() => null);
+  if (res.ok) return data;
+
+  const error = new ApiError(res.status, data);
+  // Token no longer valid (logged out elsewhere, database reset...): log out locally.
+  if (res.status === 401 && S.token && redirectOn401 && !path.startsWith('/api/auth/')){
+    clearSession();
+    toast('Your session has expired. Please sign in again.', 'error');
+    navigate('#/login?redirect=' + encodeURIComponent(location.hash.replace(/^#\/?/, '')));
+    error.handled = true;
+  }
+  throw error;
+}
+
+/** Shows an error as a toast (unless the user was already told). */
+function showError(e){
+  if (!e.handled) toast(e.message || 'Something went wrong', 'error');
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+/** Waits for the promise, but at least `ms` milliseconds (also when it fails). */
+async function withMinDelay(promise, ms){
+  const [result] = await Promise.allSettled([promise, sleep(ms)]);
+  if (result.status === 'fulfilled') return result.value;
+  throw result.reason;
+}
 
 /* =========================================================
    HELPERS
@@ -276,14 +308,14 @@ const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const app = $('#app');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const cents = p => Math.round(p * 100);
-const money = c => '$' + (c / 100).toFixed(2);
-const byId = id => PRODUCTS.find(p => p.id === Number(id));
+const usd = n => '$' + Number(n).toFixed(2);           // the API sends prices in dollars, e.g. 39.99
+const byId = id => S.products.find(p => p.id === Number(id));
 const stars = r => '★'.repeat(Math.round(r)) + '☆'.repeat(5 - Math.round(r));
 const kebab = s => s.replace(/[A-Z]/g, m => '-' + m.toLowerCase());
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const allUsers = () => [...BUILTIN_USERS, ...S.users];
-const currentUser = () => S.user ? allUsers().find(u => u.email === S.user) || null : null;
+const currentUser = () => S.user;
+const statusLabel = s => s.charAt(0) + s.slice(1).toLowerCase();   // PROCESSING -> Processing
+const LOADING = '<div class="spinner" data-testid="loading-spinner"></div>';
 
 function navigate(hash){ if (location.hash === hash) router(); else location.hash = hash; }
 
@@ -319,33 +351,132 @@ function clearErrors(form){
   $$('.invalid', form).forEach(el => el.classList.remove('invalid'));
   $$('.field-error', form).forEach(el => el.textContent = '');
 }
+/** Puts the API's fieldErrors under the matching inputs. fieldMap: API field name -> input id. */
+function showFieldErrors(e, fieldMap){
+  let shown = 0;
+  Object.entries(e.fieldErrors).forEach(([field, msg]) => {
+    if (fieldMap[field]){ setError(fieldMap[field], msg); shown++; }
+  });
+  return shown;
+}
 function field(id, label, type = 'text', value = '', placeholder = ''){
   return `<label for="${id}">${label}</label>
     <input id="${id}" name="${id}" type="${type}" value="${esc(value)}" placeholder="${esc(placeholder)}" data-testid="${kebab(id)}-input">
     <div class="field-error" id="${id}Error" data-testid="${kebab(id)}-error"></div>`;
 }
-
-function totals(delivery = 'standard'){
-  let sub = 0, count = 0;
-  S.cart.forEach(it => { const p = byId(it.id); if (p){ sub += cents(p.price) * it.qty; count += it.qty; } });
-  const discount = S.promo === 'QA10' ? Math.round(sub * 0.10) : 0;
-  let shipping;
-  if (sub === 0) shipping = 0;
-  else if (delivery === 'express') shipping = 999;
-  else shipping = (S.promo === 'FREESHIP' || sub - discount >= FREE_SHIPPING_FROM) ? 0 : 599;
-  return {sub, discount, shipping, total: sub - discount + shipping, count};
+function errorBox(e){
+  return `<div class="alert error" data-testid="api-error" role="alert">${esc(e.message)}</div>`;
 }
 
-function addToCart(id, qty = 1){
-  const p = byId(id);
-  if (!p || p.stock === 0){ toast('This item is out of stock', 'error'); return false; }
-  const item = S.cart.find(i => i.id === p.id);
-  const have = item ? item.qty : 0;
-  if (have + qty > p.stock){ toast(`Only ${p.stock} item(s) available in stock`, 'error'); return false; }
-  if (item) item.qty += qty; else S.cart.push({id: p.id, qty});
+/* =========================================================
+   DATA LOADING
+   ========================================================= */
+async function loadProducts(){
+  const page = await api('GET', '/api/products?size=100');
+  S.products = page.items;
+}
+async function loadCategories(){
+  S.categories = await api('GET', '/api/categories');
+}
+
+/* =========================================================
+   SESSION (login token)
+   ========================================================= */
+function clearSession(){
+  S.token = null; S.user = null; S.cartView = null;
   persist(); updateHeader();
-  toast(`Added to cart: ${p.title}`);
+}
+
+/** After login or registration: remember the token and move the guest cart to the account. */
+async function startSession(auth){
+  S.token = auth.token; S.user = auth.user;
+  persist();
+  const failed = [];
+  for (const it of S.guestCart){
+    try { await api('POST', '/api/cart/items', {productId: it.id, quantity: it.qty}); }
+    catch (e){ failed.push(`${(byId(it.id) || {}).title || 'Product ' + it.id}: ${e.message}`); }
+  }
+  if (S.guestPromo){ try { await api('POST', '/api/cart/promo', {code: S.guestPromo}); } catch (e){ /* ignore */ } }
+  S.guestCart = []; S.guestPromo = null; persist();
+  if (failed.length) toast('Some items could not be moved to your cart. ' + failed.join('; '), 'error');
+  await refreshCart();
+}
+
+/* =========================================================
+   CART
+   Logged-in user: the cart is stored on the server (/api/cart).
+   Guest: the cart is stored in localStorage; prices and totals still come from the server
+   (POST /api/cart/preview), so all money rules live in ONE place: the backend.
+   ========================================================= */
+const EMPTY_CART = {items: [], itemCount: 0, promoCode: null, promoDescription: null,
+  subtotal: 0, discount: 0, shipping: 0, total: 0, amountToFreeShipping: FREE_SHIPPING_FROM};
+
+async function refreshCart(){
+  S.cartView = currentUser() ? await api('GET', '/api/cart') : null;
+  updateHeader();
+}
+
+async function loadCartView(delivery = 'standard'){
+  if (currentUser()){
+    S.cartView = await api('GET', '/api/cart?deliveryMethod=' + delivery);
+    return S.cartView;
+  }
+  if (!S.guestCart.length) return EMPTY_CART;
+  return api('POST', '/api/cart/preview', {
+    items: S.guestCart.map(it => ({productId: it.id, quantity: it.qty})),
+    promoCode: S.guestPromo, deliveryMethod: delivery
+  });
+}
+
+function cartCount(){
+  return currentUser()
+    ? (S.cartView ? S.cartView.itemCount : 0)
+    : S.guestCart.reduce((n, it) => n + it.qty, 0);
+}
+
+async function addToCart(id, qty = 1){
+  const p = byId(id);
+  try {
+    if (currentUser()){
+      S.cartView = await api('POST', '/api/cart/items', {productId: id, quantity: qty});   // the server checks stock
+    } else {
+      // Guest: check in the browser (instant feedback). The server checks again at checkout.
+      if (!p || p.stock === 0){ toast('This item is out of stock', 'error'); return false; }
+      const item = S.guestCart.find(i => i.id === p.id);
+      const have = item ? item.qty : 0;
+      if (have + qty > p.stock){ toast(`Only ${p.stock} item(s) available in stock`, 'error'); return false; }
+      if (have + qty > MAX_QTY){ toast(`You can buy at most ${MAX_QTY} of the same item`, 'error'); return false; }
+      if (item) item.qty += qty; else S.guestCart.push({id: p.id, qty});
+      persist();
+    }
+  } catch (e){ showError(e); return false; }
+  updateHeader();
+  toast(`Added to cart: ${p ? p.title : 'product'}`);
   return true;
+}
+
+async function setQuantity(id, qty){
+  if (currentUser()) S.cartView = await api('PUT', '/api/cart/items/' + id, {quantity: qty});
+  else { const it = S.guestCart.find(i => i.id === id); if (it){ it.qty = qty; persist(); } }
+}
+async function removeFromCart(id){
+  if (currentUser()) S.cartView = await api('DELETE', '/api/cart/items/' + id);
+  else { S.guestCart = S.guestCart.filter(i => i.id !== id); persist(); }
+}
+async function clearCart(){
+  if (currentUser()) S.cartView = await api('DELETE', '/api/cart');
+  else { S.guestCart = []; S.guestPromo = null; persist(); }
+}
+async function applyPromo(code){
+  if (currentUser()){ S.cartView = await api('POST', '/api/cart/promo', {code}); return; }
+  // Guest: ask the server whether the code is valid (it answers 400 if not)
+  const preview = await api('POST', '/api/cart/preview', {
+    items: S.guestCart.map(it => ({productId: it.id, quantity: it.qty})), promoCode: code});
+  S.guestPromo = preview.promoCode; persist();
+}
+async function removePromo(){
+  if (currentUser()) S.cartView = await api('DELETE', '/api/cart/promo');
+  else { S.guestPromo = null; persist(); }
 }
 
 function toggleWish(id){
@@ -364,9 +495,9 @@ function toggleWish(id){
    HEADER
    ========================================================= */
 function initHeader(){
-  $('#searchCategory').innerHTML = `<option value="">All</option>` + CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+  $('#searchCategory').innerHTML = `<option value="">All</option>` + S.categories.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
   $('#subbar').innerHTML = `<a href="#/" data-testid="nav-all">All products</a>` +
-    CATEGORIES.map(c => `<a href="#/search?cat=${c}" data-testid="nav-${c.toLowerCase()}">${c}</a>`).join('') +
+    S.categories.map(c => `<a href="#/search?cat=${encodeURIComponent(c)}" data-testid="nav-${c.toLowerCase()}">${esc(c)}</a>`).join('') +
     `<a href="#/search?sort=rating" data-testid="nav-top-rated">Top rated</a>`;
   $('#searchForm').addEventListener('submit', e => {
     e.preventDefault();
@@ -378,8 +509,7 @@ function initHeader(){
   });
 }
 function updateHeader(){
-  const t = totals();
-  $('#cartCount').textContent = t.count;
+  $('#cartCount').textContent = cartCount();
   $('#wishCount').textContent = S.wishlist.length;
   const u = currentUser();
   $('#account').innerHTML = u
@@ -390,6 +520,9 @@ function updateHeader(){
 /* =========================================================
    ROUTER
    ========================================================= */
+let renderToken = 0;   // grows on every page change; an async page checks it before drawing
+const isCurrent = token => token === renderToken;
+
 function parseHash(){
   const h = location.hash.slice(1) || '/';
   const [path, qs] = h.split('?');
@@ -401,6 +534,7 @@ function router(){
   renderToken++;
   const route = parts[0] || '';
   document.body.dataset.page = route || 'home';
+  app.innerHTML = LOADING;   // pages that load data show a spinner until it arrives
   switch (route){
     case '': case 'search': renderCatalog(params); break;
     case 'product':  renderProduct(parts[1]); break;
@@ -425,7 +559,6 @@ function requireAuth(redirect){
 /* =========================================================
    CATALOG
    ========================================================= */
-let renderToken = 0;
 function hashWith(params, updates){
   const p = new URLSearchParams(params);
   Object.entries(updates).forEach(([k, v]) => (v === '' || v == null) ? p.delete(k) : p.set(k, v));
@@ -433,25 +566,19 @@ function hashWith(params, updates){
   const s = p.toString();
   return '#/search' + (s ? '?' + s : '');
 }
-function filterProducts(params){
-  const q = (params.get('q') || '').trim().toLowerCase();
-  const cat = params.get('cat') || '';
-  const min = parseFloat(params.get('min')), max = parseFloat(params.get('max'));
-  const rating = parseFloat(params.get('rating')) || 0;
-  const inStock = params.get('stock') === '1';
-  const list = PRODUCTS.filter(p =>
-    (!q || [p.title, p.brand, p.category].some(s => s.toLowerCase().includes(q))) &&
-    (!cat || p.category === cat) &&
-    (isNaN(min) || p.price >= min) && (isNaN(max) || p.price <= max) &&
-    p.rating >= rating && (!inStock || p.stock > 0));
-  const sorters = {
-    'price-asc':  (a, b) => a.price - b.price,
-    'price-desc': (a, b) => b.price - a.price,
-    'rating':     (a, b) => b.rating - a.rating || b.reviews - a.reviews,
-    'name':       (a, b) => a.title.localeCompare(b.title),
-    'featured':   (a, b) => a.id - b.id
-  };
-  return list.sort(sorters[params.get('sort')] || sorters.featured);
+/** Translates the site's URL parameters (#/search?cat=Books&min=10) into API parameters. */
+function apiSearchParams(params, page){
+  const q = new URLSearchParams({size: PAGE_SIZE});
+  const num = name => { const v = parseFloat(params.get(name)); return isNaN(v) ? null : v; };
+  if ((params.get('q') || '').trim()) q.set('q', params.get('q').trim());
+  if (params.get('cat')) q.set('category', params.get('cat'));
+  if (num('min') !== null) q.set('minPrice', num('min'));
+  if (num('max') !== null) q.set('maxPrice', num('max'));
+  if (num('rating') !== null) q.set('minRating', num('rating'));
+  if (params.get('stock') === '1') q.set('inStock', 'true');
+  if (params.get('sort') && params.get('sort') !== 'featured') q.set('sort', params.get('sort'));
+  q.set('page', page);
+  return q.toString();
 }
 function productCard(p){
   const on = S.wishlist.includes(p.id);
@@ -459,15 +586,15 @@ function productCard(p){
     <button class="wish ${on ? 'on' : ''}" data-action="toggle-wish" data-id="${p.id}" data-testid="wishlist-toggle" aria-label="Toggle wishlist">${on ? '♥' : '♡'}</button>
     <a href="#/product/${p.id}" class="thumb" style="background:${p.color}" data-testid="product-image" aria-label="${esc(p.title)}">${p.emoji}</a>
     <a href="#/product/${p.id}" class="title" data-testid="product-title">${esc(p.title)}</a>
-    <div data-testid="product-rating" data-rating="${p.rating}"><span class="stars">${stars(p.rating)}</span> <span class="muted">(${p.reviews.toLocaleString('en-US')})</span></div>
-    <div class="price" data-testid="product-price">${money(cents(p.price))}</div>
+    <div data-testid="product-rating" data-rating="${p.rating}"><span class="stars">${stars(p.rating)}</span> <span class="muted">(${p.reviewsCount.toLocaleString('en-US')})</span></div>
+    <div class="price" data-testid="product-price">${usd(p.price)}</div>
     ${p.stock > 0 && p.stock <= 3 ? `<div class="stock-low" data-testid="low-stock">Only ${p.stock} left in stock</div>` : ''}
     ${p.stock > 0
       ? `<button class="btn" id="add-to-cart-${p.id}" data-action="add" data-id="${p.id}" data-testid="add-to-cart">Add to cart</button>`
       : `<button class="btn" id="add-to-cart-${p.id}" disabled data-testid="add-to-cart">Out of stock</button>`}
   </article>`;
 }
-function renderCatalog(params){
+async function renderCatalog(params){
   const token = renderToken;
   const q = params.get('q') || '', cat = params.get('cat') || '', rating = params.get('rating') || '', sort = params.get('sort') || 'featured';
   $('#searchInput').value = q;
@@ -476,7 +603,7 @@ function renderCatalog(params){
   <div class="catalog">
     <aside class="filters" data-testid="filters">
       <h3>Department</h3>
-      <ul>${['', ...CATEGORIES].map(c => `<li><a href="${hashWith(params, {cat: c})}" class="${c === cat ? 'active' : ''}" data-testid="filter-category-${(c || 'all').toLowerCase()}">${c || 'All departments'}</a></li>`).join('')}</ul>
+      <ul>${['', ...S.categories].map(c => `<li><a href="${hashWith(params, {cat: c})}" class="${c === cat ? 'active' : ''}" data-testid="filter-category-${(c || 'all').toLowerCase()}">${esc(c || 'All departments')}</a></li>`).join('')}</ul>
       <h3>Customer rating</h3>
       <ul>${['4', '3', '2'].map(r => `<li><a href="${hashWith(params, {rating: r})}" class="${r === rating ? 'active' : ''}" data-testid="filter-rating-${r}"><span class="stars">${stars(+r)}</span> &amp; up</a></li>`).join('')}
         <li><a href="${hashWith(params, {rating: ''})}" class="${!rating ? 'active' : ''}" data-testid="filter-rating-any">Any rating</a></li></ul>
@@ -505,7 +632,7 @@ function renderCatalog(params){
           </select>
         </label>
       </div>
-      <div id="grid" class="grid" data-testid="product-grid"><div class="spinner" data-testid="loading-spinner"></div></div>
+      <div id="grid" class="grid" data-testid="product-grid">${LOADING}</div>
       <div id="pager" class="pager" data-testid="pagination"></div>
     </section>
   </div>`;
@@ -521,27 +648,37 @@ function renderCatalog(params){
     navigate(hashWith(params, {min, max}));
   });
 
-  // simulated network delay — practise explicit waits
-  setTimeout(() => {
-    if (token !== renderToken) return;
-    const list = filterProducts(params);
-    const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
-    const page = Math.min(Math.max(1, parseInt(params.get('page')) || 1), pages);
-    const slice = list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-    const from = list.length ? (page - 1) * PAGE_SIZE + 1 : 0, to = (page - 1) * PAGE_SIZE + slice.length;
-    $('#resultsSummary').innerHTML = list.length
-      ? `<span data-testid="results-range">${from}-${to}</span> of <b data-testid="results-count">${list.length}</b> results${q ? ` for <b data-testid="search-term">"${esc(q)}"</b>` : ''}${cat ? ` in <b>${esc(cat)}</b>` : ''}`
-      : `<b data-testid="results-count">0</b> results`;
-    $('#grid').innerHTML = slice.length ? slice.map(productCard).join('') : `
-      <div class="empty" data-testid="no-results"><div class="big">🔎</div>
-        <h2>No results found${q ? ` for "${esc(q)}"` : ''}</h2>
-        <p class="muted">Try checking your spelling or using more general terms.</p></div>`;
-    $('#pager').innerHTML = pages > 1 ? `
-      <button data-page="${page - 1}" ${page === 1 ? 'disabled' : ''} data-testid="page-prev">‹ Prev</button>
-      ${Array.from({length: pages}, (_, i) => `<button data-page="${i + 1}" class="${i + 1 === page ? 'active' : ''}" data-testid="page-${i + 1}" ${i + 1 === page ? 'aria-current="page"' : ''}>${i + 1}</button>`).join('')}
-      <button data-page="${page + 1}" ${page === pages ? 'disabled' : ''} data-testid="page-next">Next ›</button>` : '';
-    $$('#pager button').forEach(b => b.addEventListener('click', () => navigate(hashWith(params, {page: b.dataset.page}))));
-  }, 600);
+  const requested = Math.max(1, parseInt(params.get('page')) || 1);
+  let data;
+  try {
+    data = await withMinDelay(api('GET', '/api/products?' + apiSearchParams(params, requested)), DELAY.catalog);
+    // Page number too big (e.g. ?page=99)? Show the last page instead, like before.
+    if (!data.items.length && data.totalPages > 0){
+      data = await api('GET', '/api/products?' + apiSearchParams(params, data.totalPages));
+    }
+  } catch (e){
+    if (!isCurrent(token)) return;
+    $('#resultsSummary').innerHTML = `<b data-testid="results-count">0</b> results`;
+    $('#grid').innerHTML = errorBox(e);
+    if (e.status === 400) $('#priceError').textContent = e.message;   // e.g. a negative price typed into the URL
+    return;
+  }
+  if (!isCurrent(token)) return;   // the user already went to another page
+
+  const page = data.page, pages = data.totalPages, total = data.totalItems;
+  const from = total ? (page - 1) * PAGE_SIZE + 1 : 0, to = (page - 1) * PAGE_SIZE + data.items.length;
+  $('#resultsSummary').innerHTML = total
+    ? `<span data-testid="results-range">${from}-${to}</span> of <b data-testid="results-count">${total}</b> results${q ? ` for <b data-testid="search-term">"${esc(q)}"</b>` : ''}${cat ? ` in <b>${esc(cat)}</b>` : ''}`
+    : `<b data-testid="results-count">0</b> results`;
+  $('#grid').innerHTML = data.items.length ? data.items.map(productCard).join('') : `
+    <div class="empty" data-testid="no-results"><div class="big">🔎</div>
+      <h2>No results found${q ? ` for "${esc(q)}"` : ''}</h2>
+      <p class="muted">Try checking your spelling or using more general terms.</p></div>`;
+  $('#pager').innerHTML = pages > 1 ? `
+    <button data-page="${page - 1}" ${page === 1 ? 'disabled' : ''} data-testid="page-prev">‹ Prev</button>
+    ${Array.from({length: pages}, (_, i) => `<button data-page="${i + 1}" class="${i + 1 === page ? 'active' : ''}" data-testid="page-${i + 1}" ${i + 1 === page ? 'aria-current="page"' : ''}>${i + 1}</button>`).join('')}
+    <button data-page="${page + 1}" ${page === pages ? 'disabled' : ''} data-testid="page-next">Next ›</button>` : '';
+  $$('#pager button').forEach(b => b.addEventListener('click', () => navigate(hashWith(params, {page: b.dataset.page}))));
 }
 
 /* =========================================================
@@ -553,26 +690,36 @@ function reviewsHtml(id){
       <b data-testid="review-author">${esc(r.author)}</b> <span class="stars" data-testid="review-rating" data-rating="${r.rating}">${stars(r.rating)}</span>
       <div data-testid="review-text">${esc(r.text)}</div></div>`).join('');
 }
-function renderProduct(id){
-  const p = byId(id);
-  if (!p) return renderNotFound();
+async function renderProduct(id){
+  const token = renderToken;
+  if (!/^\d+$/.test(id || '')) return renderNotFound();
+  let p;
+  try { p = await api('GET', '/api/products/' + id); }
+  catch (e){
+    if (!isCurrent(token)) return;
+    return e.status === 404 ? renderNotFound() : (app.innerHTML = errorBox(e));
+  }
+  if (!isCurrent(token)) return;
+  // keep the local copy fresh (used by the wishlist and the guest cart)
+  S.products = S.products.map(x => x.id === p.id ? p : x);
+
   const u = currentUser(), on = S.wishlist.includes(p.id);
-  const maxQty = Math.min(p.stock, 10);
+  const maxQty = Math.min(p.stock, MAX_QTY);
   app.innerHTML = `
-  <div class="crumbs" data-testid="breadcrumbs"><a href="#/">Home</a> › <a href="#/search?cat=${p.category}" data-testid="breadcrumb-category">${p.category}</a> › <span>${esc(p.title)}</span></div>
+  <div class="crumbs" data-testid="breadcrumbs"><a href="#/">Home</a> › <a href="#/search?cat=${encodeURIComponent(p.category)}" data-testid="breadcrumb-category">${esc(p.category)}</a> › <span>${esc(p.title)}</span></div>
   <div class="product" data-testid="product-details" data-product-id="${p.id}">
     <div class="thumb image" style="background:${p.color}" data-testid="product-image">${p.emoji}</div>
     <div>
       <h1 data-testid="product-name">${esc(p.title)}</h1>
-      <div class="muted">Brand: <a href="#/search?q=${encodeURIComponent(p.brand)}" data-testid="product-brand">${p.brand}</a></div>
-      <div style="margin:8px 0"><span class="stars">${stars(p.rating)}</span> <span data-testid="product-rating">${p.rating}</span> · <span class="muted" data-testid="product-reviews-count">${p.reviews.toLocaleString('en-US')} ratings</span></div>
+      <div class="muted">Brand: <a href="#/search?q=${encodeURIComponent(p.brand)}" data-testid="product-brand">${esc(p.brand)}</a></div>
+      <div style="margin:8px 0"><span class="stars">${stars(p.rating)}</span> <span data-testid="product-rating">${p.rating}</span> · <span class="muted" data-testid="product-reviews-count">${p.reviewsCount.toLocaleString('en-US')} ratings</span></div>
       <hr style="border:0;border-top:1px solid var(--line)">
-      <div class="price" style="font-size:28px" data-testid="product-price">${money(cents(p.price))}</div>
+      <div class="price" style="font-size:28px" data-testid="product-price">${usd(p.price)}</div>
       <p>${esc(p.description)}</p>
     </div>
     <div class="buybox" data-testid="buy-box">
-      <div class="price" data-testid="buybox-price">${money(cents(p.price))}</div>
-      <div class="muted" style="font-size:13.5px">${cents(p.price) >= FREE_SHIPPING_FROM ? 'FREE delivery' : 'Free delivery on orders over $50'}</div>
+      <div class="price" data-testid="buybox-price">${usd(p.price)}</div>
+      <div class="muted" style="font-size:13.5px">${p.price >= FREE_SHIPPING_FROM ? 'FREE delivery' : 'Free delivery on orders over $50'}</div>
       ${p.stock > 0
         ? `<div class="in-stock" data-testid="stock-status">In stock${p.stock <= 3 ? ` — only ${p.stock} left` : ''}</div>
            <label for="qtySelect" style="margin:0">Quantity</label>
@@ -593,8 +740,8 @@ function renderProduct(id){
     <div class="tabpanel" id="tab-desc" data-testid="panel-description"><p>${esc(p.description)}</p><p>Product ID for automation: <code>${p.id}</code></p></div>
     <div class="tabpanel hidden" id="tab-specs" data-testid="panel-specs">
       <table class="specs" data-testid="specs-table">
-        <tr><td>Brand</td><td>${p.brand}</td></tr><tr><td>Category</td><td>${p.category}</td></tr>
-        <tr><td>SKU</td><td data-testid="product-sku">${p.sku}</td></tr><tr><td>In stock</td><td>${p.stock}</td></tr>
+        <tr><td>Brand</td><td>${esc(p.brand)}</td></tr><tr><td>Category</td><td>${esc(p.category)}</td></tr>
+        <tr><td>SKU</td><td data-testid="product-sku">${esc(p.sku)}</td></tr><tr><td>In stock</td><td>${p.stock}</td></tr>
         <tr><td>Warranty</td><td>1 year</td></tr></table>
     </div>
     <div class="tabpanel hidden" id="tab-reviews" data-testid="panel-reviews">
@@ -632,23 +779,28 @@ function renderProduct(id){
 }
 
 /* =========================================================
-   CART
+   CART PAGE
    ========================================================= */
-function summaryLines(t){
+function summaryLines(c){
   return `
-    <div class="line"><span>Items (<span data-testid="summary-count">${t.count}</span>):</span><span data-testid="summary-subtotal">${money(t.sub)}</span></div>
-    ${t.discount ? `<div class="line discount"><span>Discount (QA10):</span><span data-testid="summary-discount">-${money(t.discount)}</span></div>` : ''}
-    <div class="line"><span>Shipping:</span><span data-testid="summary-shipping">${t.shipping ? money(t.shipping) : 'FREE'}</span></div>
-    <div class="line total"><span>Order total:</span><span data-testid="summary-total">${money(t.total)}</span></div>`;
+    <div class="line"><span>Items (<span data-testid="summary-count">${c.itemCount}</span>):</span><span data-testid="summary-subtotal">${usd(c.subtotal)}</span></div>
+    ${Number(c.discount) ? `<div class="line discount"><span>Discount (${esc(c.promoCode)}):</span><span data-testid="summary-discount">-${usd(c.discount)}</span></div>` : ''}
+    <div class="line"><span>Shipping:</span><span data-testid="summary-shipping">${Number(c.shipping) ? usd(c.shipping) : 'FREE'}</span></div>
+    <div class="line total"><span>Order total:</span><span data-testid="summary-total">${usd(c.total)}</span></div>`;
 }
-function renderCart(){
-  if (!S.cart.length){
+async function renderCart(){
+  const token = renderToken;
+  let c;
+  try { c = await loadCartView(); }
+  catch (e){ if (isCurrent(token)) app.innerHTML = errorBox(e); return; }
+  if (!isCurrent(token)) return;
+  updateHeader();
+  if (!c.items.length){
     app.innerHTML = `<div class="panel empty" data-testid="empty-cart"><div class="big">🛒</div>
       <h1>Your cart is empty</h1><p class="muted">Looks like you haven't added anything yet.</p>
       <a class="btn" href="#/" data-testid="continue-shopping">Continue shopping</a></div>`;
     return;
   }
-  const t = totals();
   app.innerHTML = `
   <div class="cart">
     <div class="panel" data-testid="cart-items">
@@ -656,45 +808,48 @@ function renderCart(){
         <h1 style="margin:0">Shopping Cart</h1>
         <button class="linkbtn" data-action="clear-cart" data-testid="clear-cart">Remove all items</button>
       </div>
-      ${S.cart.map(it => { const p = byId(it.id); return `
-      <div class="cart-item" data-testid="cart-item" data-product-id="${p.id}">
-        <a href="#/product/${p.id}" class="thumb" style="background:${p.color}">${p.emoji}</a>
+      ${c.items.map(it => `
+      <div class="cart-item" data-testid="cart-item" data-product-id="${it.productId}">
+        <a href="#/product/${it.productId}" class="thumb" style="background:${it.color}">${it.emoji}</a>
         <div>
-          <a href="#/product/${p.id}" data-testid="cart-item-title"><b>${esc(p.title)}</b></a>
+          <a href="#/product/${it.productId}" data-testid="cart-item-title"><b>${esc(it.title)}</b></a>
           <div class="in-stock" style="font-size:13px">In stock</div>
           <div class="controls">
             <label style="margin:0;font-weight:500">Qty:
-              <select data-change="qty" data-id="${p.id}" data-testid="cart-item-qty">${Array.from({length: Math.min(p.stock, 10)}, (_, i) => `<option value="${i + 1}" ${i + 1 === it.qty ? 'selected' : ''}>${i + 1}</option>`).join('')}</select>
+              <select data-change="qty" data-id="${it.productId}" data-testid="cart-item-qty">${Array.from({length: Math.max(it.quantity, Math.min(it.stock, MAX_QTY))}, (_, i) => `<option value="${i + 1}" ${i + 1 === it.quantity ? 'selected' : ''}>${i + 1}</option>`).join('')}</select>
             </label>
-            <button class="linkbtn" data-action="remove" data-id="${p.id}" data-testid="cart-item-remove">Delete</button>
-            <button class="linkbtn" data-action="save-for-later" data-id="${p.id}" data-testid="cart-item-save">Save for later</button>
+            <button class="linkbtn" data-action="remove" data-id="${it.productId}" data-testid="cart-item-remove">Delete</button>
+            <button class="linkbtn" data-action="save-for-later" data-id="${it.productId}" data-testid="cart-item-save">Save for later</button>
           </div>
         </div>
-        <div style="text-align:right"><div class="price" data-testid="cart-item-total">${money(cents(p.price) * it.qty)}</div>
-          <div class="muted" style="font-size:13px" data-testid="cart-item-price">${money(cents(p.price))} each</div></div>
-      </div>`; }).join('')}
+        <div style="text-align:right"><div class="price" data-testid="cart-item-total">${usd(it.lineTotal)}</div>
+          <div class="muted" style="font-size:13px" data-testid="cart-item-price">${usd(it.unitPrice)} each</div></div>
+      </div>`).join('')}
     </div>
     <aside class="panel" data-testid="cart-summary">
-      ${t.sub < FREE_SHIPPING_FROM && S.promo !== 'FREESHIP' ? `<div class="alert info" data-testid="free-shipping-hint">Add <b>${money(FREE_SHIPPING_FROM - t.sub + t.discount)}</b> more for FREE shipping</div>` : `<div class="alert info" data-testid="free-shipping-hint">✔ Your order qualifies for FREE shipping</div>`}
-      ${summaryLines(t)}
+      ${Number(c.amountToFreeShipping) > 0
+        ? `<div class="alert info" data-testid="free-shipping-hint">Add <b>${usd(c.amountToFreeShipping)}</b> more for FREE shipping</div>`
+        : `<div class="alert info" data-testid="free-shipping-hint">✔ Your order qualifies for FREE shipping</div>`}
+      ${summaryLines(c)}
       <form class="promo" id="promoForm" novalidate data-testid="promo-form">
-        <input type="text" id="promoInput" placeholder="Promo code" data-testid="promo-input" value="${esc(S.promo || '')}" ${S.promo ? 'disabled' : ''}>
-        ${S.promo
+        <input type="text" id="promoInput" placeholder="Promo code" data-testid="promo-input" value="${esc(c.promoCode || '')}" ${c.promoCode ? 'disabled' : ''}>
+        ${c.promoCode
           ? `<button type="button" class="btn btn-secondary btn-small" data-action="remove-promo" data-testid="promo-remove">Remove</button>`
           : `<button class="btn btn-secondary btn-small" data-testid="promo-apply">Apply</button>`}
       </form>
       <div class="field-error" id="promoError" data-testid="promo-error"></div>
-      ${S.promo ? `<div class="discount" style="font-size:13px;margin-top:4px" data-testid="promo-success">Code ${S.promo} applied: ${PROMO_CODES[S.promo]}</div>` : ''}
+      ${c.promoCode ? `<div class="discount" style="font-size:13px;margin-top:4px" data-testid="promo-success">Code ${esc(c.promoCode)} applied: ${esc(c.promoDescription)}</div>` : ''}
       <a class="btn btn-block" style="margin-top:16px" href="#/checkout" data-testid="checkout-button">Proceed to checkout</a>
     </aside>
   </div>`;
-  const pf = $('#promoForm');
-  pf.addEventListener('submit', e => {
+  $('#promoForm').addEventListener('submit', async e => {
     e.preventDefault();
     const code = $('#promoInput').value.trim().toUpperCase();
+    $('#promoError').textContent = '';
     if (!code){ $('#promoError').textContent = 'Please enter a promo code'; return; }
-    if (!PROMO_CODES[code]){ $('#promoError').textContent = `Promo code "${code}" is not valid`; return; }
-    S.promo = code; persist(); toast('Promo code applied'); renderCart();
+    try { await applyPromo(code); }
+    catch (err){ if (err.status === 400) $('#promoError').textContent = err.message; else showError(err); return; }
+    toast('Promo code applied'); renderCart();
   });
 }
 
@@ -732,29 +887,31 @@ function renderLogin(params){
       <p><code>4242 4242 4242 4242</code> — success<br><code>4000 0000 0000 0002</code> — declined</p>
     </div>
   </div>`;
-  $('#loginForm').addEventListener('submit', e => {
+  $('#loginForm').addEventListener('submit', async e => {
     e.preventDefault();
     const f = e.target, box = $('#loginError');
     clearErrors(f); box.classList.add('hidden');
     const email = $('#email').value.trim(), pw = $('#password').value;
+    // Checks in the browser give instant feedback; the server checks again anyway.
     let ok = true;
     if (!email){ setError('email', 'Email is required'); ok = false; }
     else if (!EMAIL_RE.test(email)){ setError('email', 'Enter a valid email address'); ok = false; }
     if (!pw){ setError('password', 'Password is required'); ok = false; }
     if (!ok) return;
-    const u = allUsers().find(x => x.email.toLowerCase() === email.toLowerCase());
     const btn = $('#loginBtn');
     btn.disabled = true; btn.innerHTML = '<span class="spin-sm" data-testid="login-spinner"></span> Signing in…';
-    setTimeout(() => {
+    let auth;
+    try { auth = await withMinDelay(api('POST', '/api/auth/login', {email, password: pw}), DELAY.login); }
+    catch (err){
       if (!document.body.contains(btn)) return;
       btn.disabled = false; btn.textContent = 'Sign in';
-      const fail = msg => { box.textContent = msg; box.classList.remove('hidden'); };
-      if (!u || u.password !== pw) return fail('Invalid email or password');
-      if (u.locked) return fail('Sorry, this account has been locked. Please contact support.');
-      S.user = u.email; persist();
-      toast(`Welcome back, ${u.name}!`);
-      navigate('#/' + (params.get('redirect') || ''));
-    }, u && u.slow ? 3000 : 400);
+      box.textContent = err.message;   // "Invalid email or password" / "...account has been locked..."
+      box.classList.remove('hidden');
+      return;
+    }
+    await startSession(auth);
+    toast(`Welcome back, ${auth.user.name}!`);
+    navigate('#/' + (params.get('redirect') || ''));
   });
 }
 
@@ -771,11 +928,11 @@ function renderRegister(params){
       ${field('regConfirm', 'Re-enter password', 'password')}
       <label class="check"><input type="checkbox" id="regTerms" data-testid="reg-terms-checkbox"> I agree to the Terms of Use</label>
       <div class="field-error" id="regTermsError" data-testid="reg-terms-error"></div>
-      <button class="btn btn-block" data-testid="register-button">Create your ShopLab account</button>
+      <button class="btn btn-block" id="registerBtn" data-testid="register-button">Create your ShopLab account</button>
     </form>
     <p style="margin-bottom:0">Already have an account? <a href="#/login" data-testid="login-link-from-register">Sign in</a></p>
   </div></div>`;
-  $('#registerForm').addEventListener('submit', e => {
+  $('#registerForm').addEventListener('submit', async e => {
     e.preventDefault();
     const f = e.target; clearErrors(f);
     const name = $('#regName').value.trim(), email = $('#regEmail').value.trim(), pw = $('#regPassword').value, pw2 = $('#regConfirm').value;
@@ -784,14 +941,22 @@ function renderRegister(params){
     else if (name.length < 2){ setError('regName', 'Name must be at least 2 characters'); ok = false; }
     if (!email){ setError('regEmail', 'Email is required'); ok = false; }
     else if (!EMAIL_RE.test(email)){ setError('regEmail', 'Enter a valid email address'); ok = false; }
-    else if (allUsers().some(u => u.email.toLowerCase() === email.toLowerCase())){ setError('regEmail', 'An account with this email already exists'); ok = false; }
     if (!pw){ setError('regPassword', 'Password is required'); ok = false; }
     else if (pw.length < 8 || !/[A-Z]/.test(pw) || !/\d/.test(pw)){ setError('regPassword', 'Password must be at least 8 characters and contain an uppercase letter and a digit'); ok = false; }
     if (pw && pw2 !== pw){ setError('regConfirm', 'Passwords do not match'); ok = false; }
     if (!$('#regTerms').checked){ setError('regTerms', 'You must accept the Terms of Use'); ok = false; }
     if (!ok) return;
-    S.users.push({email, password: pw, name});
-    S.user = email; persist();
+    const btn = $('#registerBtn');
+    btn.disabled = true;
+    let auth;
+    try { auth = await api('POST', '/api/auth/register', {name, email, password: pw}); }
+    catch (err){
+      btn.disabled = false;
+      // e.g. 409 "An account with this email already exists" -> shown under the email field
+      if (!showFieldErrors(err, {name: 'regName', email: 'regEmail', password: 'regPassword'})) showError(err);
+      return;
+    }
+    await startSession(auth);
     toast('Account created successfully');
     navigate('#/' + (params.get('redirect') || ''));
   });
@@ -800,8 +965,20 @@ function renderRegister(params){
 /* =========================================================
    CHECKOUT
    ========================================================= */
-function renderCheckout(){
-  if (!S.cart.length){ navigate('#/cart'); return; }
+/** API field name -> id of the checkout input that shows the error. */
+const CHECKOUT_FIELDS = {
+  'shippingAddress.fullName': 'fullName', 'shippingAddress.address': 'address', 'shippingAddress.city': 'city',
+  'shippingAddress.zip': 'zip', 'shippingAddress.country': 'country', 'shippingAddress.phone': 'phone',
+  'card': 'cardNumber', 'card.number': 'cardNumber', 'card.expiry': 'expiry', 'card.cvv': 'cvv'
+};
+
+async function renderCheckout(){
+  const token = renderToken;
+  let c;
+  try { c = await loadCartView('standard'); }
+  catch (e){ if (isCurrent(token)) app.innerHTML = errorBox(e); return; }
+  if (!isCurrent(token)) return;
+  if (!c.items.length){ navigate('#/cart'); return; }
   const u = currentUser();
   app.innerHTML = `
   <h1>Checkout</h1>
@@ -835,8 +1012,8 @@ function renderCheckout(){
     </form>
     <aside class="panel summary" data-testid="order-summary">
       <h2>Order summary</h2>
-      ${S.cart.map(it => { const p = byId(it.id); return `<div class="mini" data-testid="summary-item"><span>${it.qty} × ${esc(p.title)}</span><span>${money(cents(p.price) * it.qty)}</span></div>`; }).join('')}
-      <div id="checkoutTotals"></div>
+      ${c.items.map(it => `<div class="mini" data-testid="summary-item"><span>${it.quantity} × ${esc(it.title)}</span><span>${usd(it.lineTotal)}</span></div>`).join('')}
+      <div id="checkoutTotals">${summaryLines(c)}</div>
       <button type="submit" form="checkoutForm" class="btn btn-block" id="placeOrder" style="margin-top:14px" data-testid="place-order">Place your order</button>
       <p class="muted" style="font-size:12px">By placing your order you agree to ShopLab's (fake) conditions of use.</p>
     </aside>
@@ -844,10 +1021,15 @@ function renderCheckout(){
   const form = $('#checkoutForm');
   const delivery = () => form.querySelector('[name=delivery]:checked').value;
   const payment = () => form.querySelector('[name=payment]:checked').value;
-  const refresh = () => { $('#checkoutTotals').innerHTML = summaryLines(totals(delivery())); $('#cardFields').classList.toggle('hidden', payment() !== 'card'); };
-  refresh();
-  form.addEventListener('change', refresh);
-  form.addEventListener('submit', e => {
+  form.addEventListener('change', async e => {
+    if (e.target.name === 'payment') $('#cardFields').classList.toggle('hidden', payment() !== 'card');
+    if (e.target.name === 'delivery'){
+      // Shipping cost depends on the delivery method: ask the server for new totals.
+      try { const t = await loadCartView(delivery()); if (isCurrent(token)) $('#checkoutTotals').innerHTML = summaryLines(t); }
+      catch (err){ showError(err); }
+    }
+  });
+  form.addEventListener('submit', async e => {
     e.preventDefault();
     clearErrors(form);
     const err = $('#checkoutError'); err.classList.add('hidden');
@@ -875,41 +1057,49 @@ function renderCheckout(){
       const first = $('.invalid', form); if (first) first.focus();
       return;
     }
+    const body = {
+      deliveryMethod: delivery(),
+      paymentMethod: payment(),
+      shippingAddress: {fullName: v('fullName'), address: v('address'), city: v('city'), zip: v('zip'), country: v('country'), phone: v('phone')},
+      card: payment() === 'card' ? {number: v('cardNumber'), expiry: v('expiry'), cvv: v('cvv')} : null
+    };
     const btn = $('#placeOrder');
     btn.disabled = true; btn.innerHTML = '<span class="spin-sm" data-testid="order-spinner"></span> Processing payment…';
-    setTimeout(() => {
+    let order;
+    try { order = await withMinDelay(api('POST', '/api/orders', body), DELAY.order); }
+    catch (e2){
       if (!document.body.contains(btn)) return;
-      if (payment() === 'card' && card === DECLINED_CARD){
-        btn.disabled = false; btn.textContent = 'Place your order';
-        err.textContent = 'Payment declined. Please use a different card.'; err.classList.remove('hidden');
-        window.scrollTo(0, 0);
-        return;
-      }
-      const t = totals(delivery());
-      const order = {
-        id: 'SL-' + (100000 + Math.floor(Math.random() * 900000)),
-        user: S.user, date: new Date().toISOString(), status: 'Processing',
-        items: S.cart.map(it => ({id: it.id, qty: it.qty, price: cents(byId(it.id).price)})),
-        totals: t, delivery: delivery(), payment: payment(), promo: S.promo,
-        address: {name: v('fullName'), address: v('address'), city: v('city'), zip: v('zip'), country: v('country'), phone: v('phone')}
-      };
-      S.orders.unshift(order); S.cart = []; S.promo = null; persist();
-      navigate('#/order/' + order.id);
-    }, 1500);
+      btn.disabled = false; btn.textContent = 'Place your order';
+      // 400 with fieldErrors -> under the fields; 402 declined card, 409 stock -> message at the top
+      err.textContent = showFieldErrors(e2, CHECKOUT_FIELDS) ? 'Please correct the highlighted fields.' : e2.message;
+      err.classList.remove('hidden');
+      window.scrollTo(0, 0);
+      return;
+    }
+    await refreshCart();                    // the server emptied the cart
+    loadProducts().catch(() => {});         // stock changed; refresh the local copy in the background
+    navigate('#/order/' + order.orderNumber);
   });
 }
 
-function renderOrderConfirmation(id){
-  const o = S.orders.find(x => x.id === id && x.user === S.user);
-  if (!o) return renderNotFound();
-  const eta = new Date(o.date); eta.setDate(eta.getDate() + (o.delivery === 'express' ? 2 : 7));
+async function renderOrderConfirmation(id){
+  const token = renderToken;
+  let o;
+  try { o = await api('GET', '/api/orders/' + encodeURIComponent(id || '')); }
+  catch (e){
+    if (!isCurrent(token)) return;
+    return e.status === 404 ? renderNotFound() : (e.handled ? null : (app.innerHTML = errorBox(e)));
+  }
+  if (!isCurrent(token)) return;
+  const a = o.shippingAddress;
+  const eta = new Date(o.createdAt); eta.setDate(eta.getDate() + (o.deliveryMethod === 'EXPRESS' ? 2 : 7));
   app.innerHTML = `
   <div class="panel confirm-box" data-testid="order-confirmation">
     <div class="big">✅</div>
     <h1 data-testid="confirmation-title">Thank you, your order has been placed!</h1>
-    <p>Order number: <b data-testid="order-number">${o.id}</b></p>
-    <p>Total: <b data-testid="order-total">${money(o.totals.total)}</b> · Payment: ${o.payment === 'card' ? 'Card' : 'Cash on delivery'}</p>
-    <p>Ship to: <span data-testid="order-address">${esc(o.address.name)}, ${esc(o.address.address)}, ${esc(o.address.city)} ${esc(o.address.zip)}, ${esc(o.address.country)}</span></p>
+    <p>Order number: <b data-testid="order-number">${esc(o.orderNumber)}</b></p>
+    <p>Total: <b data-testid="order-total">${usd(o.total)}</b> · Payment: ${o.paymentMethod === 'CARD' ? 'Card' : 'Cash on delivery'}</p>
+    <p>Ship to: <span data-testid="order-address">${esc(a.fullName)}, ${esc(a.address)}, ${esc(a.city)} ${esc(a.zip)}, ${esc(a.country)}</span></p>
     <p>Estimated delivery: <b data-testid="order-eta">${eta.toLocaleDateString('en-US', {weekday: 'long', month: 'long', day: 'numeric'})}</b></p>
     <p><a class="btn" href="#/orders" data-testid="view-orders">View your orders</a> &nbsp; <a class="btn btn-secondary" href="#/" data-testid="continue-shopping">Continue shopping</a></p>
   </div>`;
@@ -918,29 +1108,37 @@ function renderOrderConfirmation(id){
 /* =========================================================
    ORDERS & WISHLIST
    ========================================================= */
-function renderOrders(){
-  const list = S.orders.filter(o => o.user === S.user);
+async function renderOrders(){
+  const token = renderToken;
+  let list;
+  try { list = await api('GET', '/api/orders'); }
+  catch (e){ if (isCurrent(token) && !e.handled) app.innerHTML = errorBox(e); return; }
+  if (!isCurrent(token)) return;
   if (!list.length){
     app.innerHTML = `<div class="panel empty" data-testid="no-orders"><div class="big">📦</div><h1>You have no orders yet</h1><a class="btn" href="#/">Start shopping</a></div>`;
     return;
   }
   app.innerHTML = `<h1>Your orders</h1><div data-testid="orders-list">${list.map(o => `
-    <div class="order" data-testid="order" data-order-id="${o.id}">
+    <div class="order" data-testid="order" data-order-id="${esc(o.orderNumber)}">
       <div class="order-head">
-        <div>ORDER PLACED<b>${new Date(o.date).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}</b></div>
-        <div>TOTAL<b data-testid="order-total">${money(o.totals.total)}</b></div>
-        <div>SHIP TO<b>${esc(o.address.name)}</b></div>
-        <div>ORDER #<b data-testid="order-number">${o.id}</b></div>
-        <div style="margin-left:auto"><span class="status ${o.status.toLowerCase()}" data-testid="order-status">${o.status}</span></div>
+        <div>ORDER PLACED<b>${new Date(o.createdAt).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})}</b></div>
+        <div>TOTAL<b data-testid="order-total">${usd(o.total)}</b></div>
+        <div>SHIP TO<b>${esc(o.shippingAddress.fullName)}</b></div>
+        <div>ORDER #<b data-testid="order-number">${esc(o.orderNumber)}</b></div>
+        <div style="margin-left:auto"><span class="status ${o.status.toLowerCase()}" data-testid="order-status">${statusLabel(o.status)}</span></div>
       </div>
       <div class="order-body">
-        ${o.items.map(it => { const p = byId(it.id); return `<div class="mini" data-testid="order-item">${p.emoji} <a href="#/product/${p.id}">${esc(p.title)}</a> × ${it.qty} — ${money(it.price * it.qty)}</div>`; }).join('')}
-        ${o.status === 'Processing' ? `<button class="btn btn-secondary btn-small" style="margin-top:10px" data-action="cancel-order" data-order="${o.id}" data-testid="cancel-order">Cancel order</button>` : ''}
+        ${o.items.map(it => `<div class="mini" data-testid="order-item">${(byId(it.productId) || {}).emoji || ''} <a href="#/product/${it.productId}">${esc(it.title)}</a> × ${it.quantity} — ${usd(it.lineTotal)}</div>`).join('')}
+        ${o.status === 'PROCESSING' ? `<button class="btn btn-secondary btn-small" style="margin-top:10px" data-action="cancel-order" data-order="${esc(o.orderNumber)}" data-testid="cancel-order">Cancel order</button>` : ''}
       </div>
     </div>`).join('')}</div>`;
 }
 
-function renderWishlist(){
+async function renderWishlist(){
+  const token = renderToken;
+  try { await loadProducts(); }   // fresh stock and prices
+  catch (e){ if (isCurrent(token)) app.innerHTML = errorBox(e); return; }
+  if (!isCurrent(token)) return;
   const items = S.wishlist.map(byId).filter(Boolean);
   if (!items.length){
     app.innerHTML = `<div class="panel empty" data-testid="empty-wishlist"><div class="big">♡</div><h1>Your wishlist is empty</h1><a class="btn" href="#/">Browse products</a></div>`;
@@ -955,7 +1153,7 @@ function renderWishlist(){
           <button class="btn btn-small" data-action="move-to-cart" data-id="${p.id}" ${p.stock ? '' : 'disabled'} data-testid="wishlist-move-to-cart">Move to cart</button>
           <button class="linkbtn" data-action="remove-wish" data-id="${p.id}" data-testid="wishlist-remove">Remove</button>
         </div></div>
-      <div class="price">${money(cents(p.price))}</div>
+      <div class="price">${usd(p.price)}</div>
     </div>`).join('')}</div>`;
 }
 
@@ -967,6 +1165,16 @@ function renderNotFound(){
 /* =========================================================
    GLOBAL EVENTS
    ========================================================= */
+/** Runs a cart change, then redraws the cart page and the header. Errors become a toast. */
+async function cartAction(fn, successMessage){
+  try { await fn(); }
+  catch (e){ showError(e); return false; }
+  if (successMessage) toast(successMessage);
+  updateHeader();
+  if (document.body.dataset.page === 'cart') renderCart();
+  return true;
+}
+
 document.addEventListener('click', async e => {
   const el = e.target.closest('[data-action]');
   if (!el) return;
@@ -974,25 +1182,27 @@ document.addEventListener('click', async e => {
   switch (el.dataset.action){
     case 'add': addToCart(id, 1); break;
     case 'add-qty': addToCart(id, Number($('#qtySelect').value)); break;
-    case 'buy-now': if (addToCart(id, Number($('#qtySelect').value))) navigate('#/checkout'); break;
+    case 'buy-now': if (await addToCart(id, Number($('#qtySelect').value))) navigate('#/checkout'); break;
     case 'toggle-wish': toggleWish(id); break;
     case 'remove':
       if (await confirmModal('Remove this item from your cart?', {ok: 'Remove'})){
-        S.cart = S.cart.filter(i => i.id !== id); persist(); toast('Item removed from cart'); renderCart(); updateHeader();
+        cartAction(() => removeFromCart(id), 'Item removed from cart');
       }
       break;
     case 'save-for-later':
-      S.cart = S.cart.filter(i => i.id !== id);
-      if (!S.wishlist.includes(id)) S.wishlist.push(id);
-      persist(); toast('Moved to wishlist'); renderCart(); updateHeader();
+      cartAction(async () => {
+        await removeFromCart(id);
+        if (!S.wishlist.includes(id)){ S.wishlist.push(id); persist(); }
+      }, 'Moved to wishlist');
       break;
     case 'clear-cart':
-      if (await confirmModal('Remove all items from your cart?', {ok: 'Remove all'})){
-        S.cart = []; S.promo = null; persist(); renderCart(); updateHeader();
-      }
+      if (await confirmModal('Remove all items from your cart?', {ok: 'Remove all'})) cartAction(clearCart);
       break;
-    case 'remove-promo': S.promo = null; persist(); renderCart(); break;
-    case 'logout': S.user = null; persist(); toast('You have been signed out'); navigate('#/'); break;
+    case 'remove-promo': cartAction(removePromo); break;
+    case 'logout':
+      try { await api('POST', '/api/auth/logout'); } catch (err){ /* token may already be invalid: log out anyway */ }
+      clearSession(); toast('You have been signed out'); navigate('#/');
+      break;
     case 'clear-filters': navigate('#/'); break;
     case 'tab':
       $$('.tablist button').forEach(b => b.classList.toggle('active', b === el));
@@ -1005,20 +1215,28 @@ document.addEventListener('click', async e => {
       break;
     }
     case 'move-to-cart':
-      if (addToCart(id, 1)){ S.wishlist = S.wishlist.filter(x => x !== id); persist(); renderWishlist(); updateHeader(); }
+      if (await addToCart(id, 1)){ S.wishlist = S.wishlist.filter(x => x !== id); persist(); renderWishlist(); updateHeader(); }
       break;
     case 'remove-wish': S.wishlist = S.wishlist.filter(x => x !== id); persist(); renderWishlist(); updateHeader(); break;
     case 'cancel-order': {
-      const o = S.orders.find(x => x.id === el.dataset.order);
-      if (o && await confirmModal(`Cancel order ${o.id}?`, {title: 'Cancel order', ok: 'Yes, cancel'})){
-        o.status = 'Cancelled'; persist(); toast(`Order ${o.id} has been cancelled`); renderOrders();
+      const number = el.dataset.order;
+      if (await confirmModal(`Cancel order ${number}?`, {title: 'Cancel order', ok: 'Yes, cancel'})){
+        try { await api('POST', `/api/orders/${encodeURIComponent(number)}/cancel`); }
+        catch (err){ showError(err); break; }
+        toast(`Order ${number} has been cancelled`);
+        loadProducts().catch(() => {});   // the items went back into stock
+        renderOrders();
       }
       break;
     }
     case 'reset-data':
       if (await confirmModal('This clears cart, wishlist, users, orders and reviews.', {title: 'Reset store data?', ok: 'Reset'})){
+        // 1) the database (POST /api/test/reset), 2) what this browser remembers
+        try { await api('POST', '/api/test/reset'); }
+        catch (err){ showError(err); break; }
         try { Object.keys(localStorage).filter(k => k.startsWith(KEY)).forEach(k => localStorage.removeItem(k)); } catch(err){}
-        Object.assign(S, {cart: [], wishlist: [], user: null, users: [], orders: [], promo: null, reviews: {}});
+        Object.assign(S, {token: null, user: null, cartView: null, guestCart: [], guestPromo: null, wishlist: [], reviews: {}});
+        await loadProducts().catch(() => {});
         toast('Store data has been reset'); navigate('#/');
       }
       break;
@@ -1026,15 +1244,37 @@ document.addEventListener('click', async e => {
 });
 document.addEventListener('change', e => {
   if (e.target.dataset.change === 'qty'){
-    const it = S.cart.find(i => i.id === Number(e.target.dataset.id));
-    if (it){ it.qty = Number(e.target.value); persist(); renderCart(); updateHeader(); }
+    const id = Number(e.target.dataset.id), qty = Number(e.target.value);
+    cartAction(() => setQuantity(id, qty));
   }
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').classList.contains('hidden')) $('#modalCancel').click(); });
 
-window.addEventListener('hashchange', router);
-initHeader();
-router();
+/* =========================================================
+   START
+   ========================================================= */
+async function start(){
+  app.innerHTML = LOADING;
+  try {
+    await Promise.all([loadCategories(), loadProducts()]);
+  } catch (e){
+    // Without the API the shop can't work: show a clear message instead of an empty page.
+    app.innerHTML = `<div class="panel empty" data-testid="api-unavailable"><div class="big">🔌</div>
+      <h1>The shop is not available</h1><p class="muted" data-testid="api-unavailable-message">${esc(e.message)}</p>
+      <button class="btn" onclick="location.reload()" data-testid="retry">Try again</button></div>`;
+    return;
+  }
+  initHeader();
+  if (S.token){
+    // Still logged in from last time? Ask the server who the token belongs to.
+    try { S.user = await api('GET', '/api/users/me', undefined, {redirectOn401: false}); }
+    catch (e){ S.token = null; persist(); }
+  }
+  try { await refreshCart(); } catch (e){ /* the header just shows 0 */ }
+  window.addEventListener('hashchange', router);
+  router();
+}
+start();
 </script>
 </body>
 </html>

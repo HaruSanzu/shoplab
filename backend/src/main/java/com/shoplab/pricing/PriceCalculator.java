@@ -58,6 +58,18 @@ public final class PriceCalculator {
         return new Totals(subtotal, discount, shipping, money(subtotal.subtract(discount).add(shipping)));
     }
 
+    /**
+     * How much more the customer must spend to get free STANDARD shipping. 0 = it is already free.
+     * The website shows it as "Add $X more for FREE shipping".
+     */
+    public static BigDecimal amountToFreeShipping(Totals totals, String promoCode) {
+        if (PromoCodes.FREESHIP.equals(promoCode)) {
+            return money(BigDecimal.ZERO);
+        }
+        BigDecimal missing = FREE_SHIPPING_FROM.subtract(totals.subtotal().subtract(totals.discount()));
+        return money(missing.max(BigDecimal.ZERO));
+    }
+
     /** Always 2 decimals, rounding .005 up (like the frontend's Math.round on cents). */
     private static BigDecimal money(BigDecimal value) {
         return value.setScale(2, RoundingMode.HALF_UP);
