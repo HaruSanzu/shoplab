@@ -17,6 +17,7 @@
 
     <modules>
         <module>backend</module>
-        <!-- <module>tests</module>  added in step 3 -->
+        <!-- Automated tests. They need the running shop: docker compose up -d -->
+        <module>tests</module>
     </modules>
 </project>

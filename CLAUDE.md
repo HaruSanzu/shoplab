@@ -22,7 +22,8 @@ shoplab/
 │   └── README.md        Test data, routes and data-testid conventions of the UI.
 ├── docs/                Step-by-step explanations in Russian (01-backend.md, 02-frontend-api.md, ...).
 ├── backend/             REST API: Java 21, Spring Boot 4, Spring Data JPA, PostgreSQL, Flyway.
-├── tests/               (step 3+) Selenium + Cucumber + JUnit 5, REST Assured, JDBC, Allure.
+├── tests/               Automated tests (separate Maven module, talks to the running stack over HTTP).
+│                        Step 3: API tests (JUnit 5, REST Assured, AssertJ, Allure). Later: JDBC, Selenium + Cucumber.
 ├── docker-compose.yml   postgres + backend + frontend with one command.
 ├── .github/workflows/   (step 7) CI: start stack, run tests, publish Allure to GitHub Pages.
 └── pom.xml              Maven aggregator: lists the modules (backend, later tests).
@@ -86,6 +87,20 @@ then run `ShopLabApplication` with JDK 21. Defaults in `application.yml` point t
 - **Never remove or rename a `data-testid`**; keep routes and UI texts stable (UI tests depend on them).
 - Minimum delays kept for wait practice: catalog 600 ms, login 400 ms, order 1500 ms (`DELAY` constant).
 
+## Tests conventions (`tests/`)
+
+- Package `com.shoplab.tests`: `config/TestConfig` (URLs from `-Dapi.url` → env `SHOPLAB_API_URL` → `http://localhost:8080`),
+  `api/Specs` (request specs: `anonymous()`, `withToken(token)`, `technical()` = not reported in Allure),
+  `api/client/*Client` (one API client per feature = Page Object for the API; tests never write URLs),
+  `api/model/*` (own record copies of the JSON bodies, never import backend classes), `data/TestData`, `data/TestUsers`.
+- Every API test class extends `BaseApiTest` (`@Tag("api")`, waits for health, `POST /api/test/reset` once per class).
+  Helpers: `expect(response, status, Type.class)` and `expectError(response, status)`.
+- Tests are independent: cart/order tests register a **fresh user per test** (`TestUsers.registerNew()`);
+  stock checks compare with the value read before the action, not with a fixed number.
+- Money: `BigDecimal` + `isEqualByComparingTo("79.98")`. No hard-coded future dates (`Cards.futureExpiry()`).
+- Tags: `api`, `smoke`, `slow`. Run: `mvn -pl tests test`, `mvn -pl tests test -Dgroups=smoke`.
+- UI tests (step 5): Page Object Model + Cucumber step definitions, always.
+
 ## API summary (`/api`)
 
 | Method | Path | Auth | Notes |
@@ -122,7 +137,7 @@ then run `ShopLabApplication` with JDK 21. Defaults in `application.yml` point t
       data; Swagger UI; health check; test reset endpoint; Dockerfiles; compose with healthchecks.
 - [x] **Step 2: Frontend → API.** Products, auth, cart and orders via `fetch`; `config.js` for the API URL; guest cart
       + `/api/cart/preview`; session expiry handling; API-unavailable page. All 170 original `data-testid`s kept.
-- [ ] **Step 3: `tests/` module skeleton + API tests.** Maven module with JUnit 5, REST Assured, AssertJ, Allure;
+- [x] **Step 3: `tests/` module skeleton + API tests.** Maven module with JUnit 5, REST Assured, AssertJ, Allure;
       config (base URLs via system properties/env); request specs, POJOs for bodies; tests for products, auth, cart,
       orders (positive + negative); reset DB before tests.
 - [ ] **Step 4: Database tests (JDBC).** Small DB helper; verify that API actions change the DB correctly
@@ -141,3 +156,7 @@ as if teaching a junior QA engineer. Reply in Russian.
 After each step, write a detailed explanation file in Russian to `docs/NN-<topic>.md`
 (e.g. `docs/01-backend.md`, `docs/02-frontend-api.md`): what was done and why, how it works,
 manual verification steps, problems met along the way, glossary of new terms. Use `docs/01-backend.md` as the template.
+
+
+When gonna come to test cases. always have a goal to do everything 
+by Page Object Model, do step-definitions.

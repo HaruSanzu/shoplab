@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The automated tests of ShopLab. This module contains NO application code, only tests,
+  so everything lives in src/test/java and every dependency has <scope>test</scope>.
+
+  The tests talk to a RUNNING shop (docker compose up -d) over HTTP, exactly like a real client.
+  They do not start the backend themselves.
+
+  Run all tests:            mvn -pl tests test
+  Run only one tag:         mvn -pl tests test -Dgroups=smoke
+  Point to another server:  mvn -pl tests test -Dapi.url=http://my-server:8080
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.shoplab</groupId>
+    <artifactId>shoplab-tests</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <name>ShopLab Tests</name>
+    <description>API, database and UI tests for the ShopLab training store</description>
+
+    <properties>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- All versions in one place: easy to see and to upgrade. -->
+        <junit.version>5.14.4</junit.version>
+        <rest-assured.version>6.3.0</rest-assured.version>
+        <assertj.version>3.27.7</assertj.version>
+        <jackson.version>2.22.4</jackson.version>
+        <allure.version>2.35.6</allure.version>
+        <slf4j.version>2.0.17</slf4j.version>
+        <surefire.version>3.5.4</surefire.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!--
+              A "BOM" (bill of materials) is a list of versions that work together.
+              Importing it means we don't write a version for each junit-* / allure-* artifact.
+            -->
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.qameta.allure</groupId>
+                <artifactId>allure-bom</artifactId>
+                <version>${allure.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- JUnit 5: runs the tests (@Test, @BeforeEach, @ParameterizedTest, @Tag ...) -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- REST Assured: sends HTTP requests and checks responses with a readable given/when/then style -->
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>${rest-assured.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Jackson: converts Java objects <-> JSON. REST Assured finds it automatically. -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- AssertJ: fluent, readable assertions: assertThat(cart.total()).isEqualByComparingTo("79.98") -->
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Allure: collects test results for a nice HTML report (fully set up in step 6) -->
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Attaches every HTTP request and response to the Allure report -->
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-rest-assured</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Simple logger: some libraries log through SLF4J and print a warning without it -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Surefire = the Maven plugin that runs tests during `mvn test` -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire.version}</version>
+                <!-- Settings come from src/test/resources (allure.properties), so IntelliJ runs behave the same -->
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -28,7 +28,17 @@ Stop with `docker compose down` (add `-v` to also delete the database data).
 |---|---|
 | `frontend/` | The website (static HTML + JavaScript), see [frontend/README.md](frontend/README.md) |
 | `backend/` | REST API: Java 21, Spring Boot, PostgreSQL, Flyway |
-| `tests/` | *(coming)* Selenium + Cucumber + JUnit 5, REST Assured, JDBC, Allure |
+| `tests/` | Automated tests: API tests with REST Assured + JUnit 5 (done); JDBC, Selenium + Cucumber *(coming)* |
+
+## Running the tests
+
+The shop must be running (`docker compose up -d`). Java 21 and Maven are needed.
+
+```bash
+mvn -pl tests test                    # all API tests
+mvn -pl tests test -Dgroups=smoke     # only the quick smoke set
+mvn -pl tests test -Dapi.url=http://other-host:8080
+```
 
 ## Test data
 

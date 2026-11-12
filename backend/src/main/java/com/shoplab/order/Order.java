@@ -20,6 +20,7 @@ import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,7 +82,10 @@ public class Order {
         this.orderNumber = orderNumber;
         this.user = user;
         this.status = OrderStatus.PROCESSING;
-        this.createdAt = Instant.now();
+        // PostgreSQL stores time with MICROsecond precision, Java's clock has NANOseconds.
+        // Without truncating, POST /api/orders would return ...054530079Z but a later GET ...054530Z:
+        // the same order with two different createdAt values (found by OrdersApiTest.getOrderByNumber).
+        this.createdAt = Instant.now().truncatedTo(ChronoUnit.MICROS);
         this.deliveryMethod = deliveryMethod;
         this.paymentMethod = paymentMethod;
         this.cardLast4 = cardLast4;

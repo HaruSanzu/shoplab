@@ -39,9 +39,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest req) {
         Map<String, String> fieldErrors = new TreeMap<>(); // sorted = stable order in responses
         for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
-            fieldErrors.putIfAbsent(fe.getField(), fe.getDefaultMessage());
+            // One field can break several rules at once, e.g. name "" breaks @NotBlank AND @Size(min = 2).
+            // The validator reports them in RANDOM order, so "first one wins" gave a different message
+            // on each call (found by AuthApiTest.registerValidation). Like the frontend, "required" wins.
+            if (isRequiredRule(fe) || !fieldErrors.containsKey(fe.getField())) {
+                fieldErrors.put(fe.getField(), fe.getDefaultMessage());
+            }
         }
         return build(HttpStatus.BAD_REQUEST, "Validation failed", req, fieldErrors);
+    }
+
+    /** @NotBlank / @NotNull: "the field is missing". Its message beats every other rule on the same field. */
+    private static boolean isRequiredRule(FieldError fe) {
+        return "NotBlank".equals(fe.getCode()) || "NotNull".equals(fe.getCode());
     }
 
     /** Body is not valid JSON, or a value has the wrong type (e.g. "quantity": "abc"). */
