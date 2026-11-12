@@ -23,7 +23,8 @@ shoplab/
 ├── docs/                Step-by-step explanations in Russian (01-backend.md, 02-frontend-api.md, ...).
 ├── backend/             REST API: Java 21, Spring Boot 4, Spring Data JPA, PostgreSQL, Flyway.
 ├── tests/               Automated tests (separate Maven module, talks to the running stack over HTTP).
-│                        Step 3: API tests (JUnit 5, REST Assured, AssertJ, Allure). Later: JDBC, Selenium + Cucumber.
+│                        Step 3: API tests (JUnit 5, REST Assured, AssertJ, Allure). Step 4: DB tests (JDBC).
+│                        Later: Selenium + Cucumber.
 ├── docker-compose.yml   postgres + backend + frontend with one command.
 ├── .github/workflows/   (step 7) CI: start stack, run tests, publish Allure to GitHub Pages.
 └── pom.xml              Maven aggregator: lists the modules (backend, later tests).
@@ -93,12 +94,18 @@ then run `ShopLabApplication` with JDK 21. Defaults in `application.yml` point t
   `api/Specs` (request specs: `anonymous()`, `withToken(token)`, `technical()` = not reported in Allure),
   `api/client/*Client` (one API client per feature = Page Object for the API; tests never write URLs),
   `api/model/*` (own record copies of the JSON bodies, never import backend classes), `data/TestData`, `data/TestUsers`.
-- Every API test class extends `BaseApiTest` (`@Tag("api")`, waits for health, `POST /api/test/reset` once per class).
-  Helpers: `expect(response, status, Type.class)` and `expectError(response, status)`.
+- `BaseTest` (no tag): waits for health, `POST /api/test/reset` once per class, helpers
+  `expect(response, status, Type.class)` / `expectError(response, status)`.
+  `api/BaseApiTest` adds `@Tag("api")`; `db/BaseDbTest` adds `@Tag("db")` and checks the DB connection.
+- DB tests (`db/`): act through the API, verify with SQL. `Database` = tiny JDBC helper (`query`, `queryOne`,
+  `count`, `update`; always `?` placeholders; each query attached to Allure; errors → `DbException` with SQLState).
+  `ShopDb` = all SQL in named methods (DB analogue of API clients), rows as records in `DbRows`.
+  DB config: `-Ddb.url` / `SHOPLAB_DB_URL` (default `jdbc:postgresql://localhost:5432/shoplab`), `db.user`, `db.password`.
+  Tests that change data with SQL must restore it in `finally`. Tests of one class share stock: use different products.
 - Tests are independent: cart/order tests register a **fresh user per test** (`TestUsers.registerNew()`);
   stock checks compare with the value read before the action, not with a fixed number.
 - Money: `BigDecimal` + `isEqualByComparingTo("79.98")`. No hard-coded future dates (`Cards.futureExpiry()`).
-- Tags: `api`, `smoke`, `slow`. Run: `mvn -pl tests test`, `mvn -pl tests test -Dgroups=smoke`.
+- Tags: `api`, `db`, `smoke`, `slow`. Run: `mvn -pl tests test`, `mvn -pl tests test -Dgroups=smoke`.
 - UI tests (step 5): Page Object Model + Cucumber step definitions, always.
 
 ## API summary (`/api`)
@@ -140,7 +147,7 @@ then run `ShopLabApplication` with JDK 21. Defaults in `application.yml` point t
 - [x] **Step 3: `tests/` module skeleton + API tests.** Maven module with JUnit 5, REST Assured, AssertJ, Allure;
       config (base URLs via system properties/env); request specs, POJOs for bodies; tests for products, auth, cart,
       orders (positive + negative); reset DB before tests.
-- [ ] **Step 4: Database tests (JDBC).** Small DB helper; verify that API actions change the DB correctly
+- [x] **Step 4: Database tests (JDBC).** Small DB helper; verify that API actions change the DB correctly
       (password hashed, order rows + totals, stock decrease/restore, cart emptied).
 - [ ] **Step 5: UI tests: Selenium + Cucumber + JUnit 5.** Feature files in Gherkin, step definitions, Page Objects,
       WebDriver factory (Chrome, headless option), explicit waits, hooks (screenshot on failure → Allure), tags.

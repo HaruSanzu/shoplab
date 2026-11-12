@@ -26,6 +26,19 @@ public final class TestConfig {
         return Integer.parseInt(read("api.waitSeconds", "SHOPLAB_API_WAIT_SECONDS", "60"));
     }
 
+    /** JDBC address of the database, e.g. -Ddb.url=jdbc:postgresql://other-host:5432/shoplab */
+    public static String dbUrl() {
+        return read("db.url", "SHOPLAB_DB_URL", "jdbc:postgresql://localhost:5432/shoplab");
+    }
+
+    public static String dbUser() {
+        return read("db.user", "SHOPLAB_DB_USER", "shoplab");
+    }
+
+    public static String dbPassword() {
+        return read("db.password", "SHOPLAB_DB_PASSWORD", "shoplab");
+    }
+
     private static String read(String systemProperty, String envVariable, String defaultValue) {
         String value = System.getProperty(systemProperty);
         if (value == null || value.isBlank()) {

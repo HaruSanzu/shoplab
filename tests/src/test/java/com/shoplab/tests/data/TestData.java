@@ -41,6 +41,8 @@ public final class TestData {
         public static final long JAVA_BOOK = 8;
         /** BDD with Gherkin, $19.99, stock 18. */
         public static final long GHERKIN_BOOK = 9;
+        /** Mystery at Harbor Lane, $12.99, only 3 in stock. */
+        public static final long LOW_STOCK_BOOK = 10;
         /** Coffee Maker Brew 12, $59.99, stock 20. */
         public static final long COFFEE_MAKER = 12;
         /** Ceramic Mug Set, $18.00, stock 50. */

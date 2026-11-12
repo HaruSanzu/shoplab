@@ -7,8 +7,8 @@
   They do not start the backend themselves.
 
   Run all tests:            mvn -pl tests test
-  Run only one tag:         mvn -pl tests test -Dgroups=smoke
-  Point to another server:  mvn -pl tests test -Dapi.url=http://my-server:8080
+  Run only one tag:         mvn -pl tests test -Dgroups=smoke   (tags: api, db, smoke, slow)
+  Point to another server:  mvn -pl tests test -Dapi.url=http://my-server:8080 -Ddb.url=jdbc:postgresql://my-server:5432/shoplab
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -31,6 +31,7 @@
         <assertj.version>3.27.7</assertj.version>
         <jackson.version>2.22.4</jackson.version>
         <allure.version>2.35.6</allure.version>
+        <postgresql.version>42.7.14</postgresql.version>
         <slf4j.version>2.0.17</slf4j.version>
         <surefire.version>3.5.4</surefire.version>
     </properties>
@@ -100,6 +101,14 @@
         <dependency>
             <groupId>io.qameta.allure</groupId>
             <artifactId>allure-rest-assured</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- JDBC driver: lets Java code talk to PostgreSQL directly (database tests, step 4) -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
             <scope>test</scope>
         </dependency>
 
