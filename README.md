@@ -32,15 +32,21 @@ Stop with `docker compose down` (add `-v` to also delete the database data).
 
 ## Running the tests
 
-The shop must be running (`docker compose up -d`). Java 21 and Maven are needed.
+The shop must be running (`docker compose up -d`). Java 21, Maven and Google Chrome are needed
+(the matching chromedriver is downloaded automatically by Selenium Manager).
 
 ```bash
-mvn -pl tests test                    # all tests (API + database)
-mvn -pl tests test -Dgroups=api       # only API tests
-mvn -pl tests test -Dgroups=db        # only database tests
-mvn -pl tests test -Dgroups=smoke     # only the quick smoke set
-mvn -pl tests test -Dapi.url=http://other-host:8080
+mvn -pl tests test                       # all tests (API + database + UI): 242
+mvn -pl tests test -Dgroups=api          # only API tests
+mvn -pl tests test -Dgroups=db           # only database tests
+mvn -pl tests test -Dgroups=ui           # only UI scenarios (Selenium + Cucumber)
+mvn -pl tests test -DexcludedGroups=ui   # everything except the browser tests
+mvn -pl tests test -Dgroups=smoke        # only the quick smoke set
+mvn -pl tests test -Dui.headless=true    # run Chrome without a window
+mvn -pl tests test -Dapi.url=http://other-host:8080 -Dui.url=http://other-host:3000
 ```
+
+UI scenarios are in `tests/src/test/resources/features`; after a run, open `tests/target/cucumber-report.html`.
 
 ## Test data
 

@@ -7,8 +7,10 @@
   They do not start the backend themselves.
 
   Run all tests:            mvn -pl tests test
-  Run only one tag:         mvn -pl tests test -Dgroups=smoke   (tags: api, db, smoke, slow)
-  Point to another server:  mvn -pl tests test -Dapi.url=http://my-server:8080 -Ddb.url=jdbc:postgresql://my-server:5432/shoplab
+  Run only one tag:         mvn -pl tests test -Dgroups=smoke   (tags: api, db, ui, smoke, slow)
+  Exclude the browser:      mvn -pl tests test -DexcludedGroups=ui
+  Watch nothing (no window): mvn -pl tests test -Dgroups=ui -Dui.headless=true
+  Point to another server:  mvn -pl tests test -Dapi.url=http://my-server:8080 -Ddb.url=jdbc:postgresql://my-server:5432/shoplab -Dui.url=http://my-server:3000
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -34,6 +36,12 @@
         <postgresql.version>42.7.14</postgresql.version>
         <slf4j.version>2.0.17</slf4j.version>
         <surefire.version>3.5.4</surefire.version>
+        <selenium.version>4.52.0</selenium.version>
+        <!--
+          Cucumber 7, not 8: Cucumber 8 needs JUnit 6, and Allure's Cucumber plugin
+          (allure-cucumber7-jvm) is made for Cucumber 7. Versions must fit together.
+        -->
+        <cucumber.version>7.34.9</cucumber.version>
     </properties>
 
     <dependencyManagement>
@@ -46,6 +54,13 @@
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
                 <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.cucumber</groupId>
+                <artifactId>cucumber-bom</artifactId>
+                <version>${cucumber.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -109,6 +124,53 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>${postgresql.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ===================== UI tests (step 5) ===================== -->
+
+        <!--
+          Selenium WebDriver: controls a real browser (opens pages, clicks, types, reads text).
+          Since Selenium 4.6 the built-in "Selenium Manager" downloads the right chromedriver itself.
+        -->
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>${selenium.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Cucumber: runs scenarios written in Gherkin (.feature files) using our step definitions -->
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-java</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Lets JUnit 5 (and so Maven and IntelliJ) run Cucumber scenarios as tests -->
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-junit-platform-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!--
+          PicoContainer = dependency injection for step classes: Cucumber creates ONE UiContext per
+          scenario and passes it to every step class constructor, so all steps share the same browser.
+        -->
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-picocontainer</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- @Suite: the runner class RunCucumberTest that tells JUnit where the .feature files are -->
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-suite</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Shows every Gherkin step (Given/When/Then) in the Allure report -->
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-cucumber7-jvm</artifactId>
             <scope>test</scope>
         </dependency>
 

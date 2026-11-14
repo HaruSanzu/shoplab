@@ -39,6 +39,26 @@ public final class TestConfig {
         return read("db.password", "SHOPLAB_DB_PASSWORD", "shoplab");
     }
 
+    // ---------- UI tests (step 5) ----------
+
+    /** Address of the website (the frontend), e.g. -Dui.url=http://other-host:3000 */
+    public static String uiUrl() {
+        return withoutTrailingSlash(read("ui.url", "SHOPLAB_UI_URL", "http://localhost:3000"));
+    }
+
+    /**
+     * true = Chrome runs without a window ("headless"): faster, and the only option on a CI server.
+     * false (default) = you can WATCH the browser click through the site on your machine.
+     */
+    public static boolean uiHeadless() {
+        return Boolean.parseBoolean(read("ui.headless", "SHOPLAB_UI_HEADLESS", "false"));
+    }
+
+    /** The longest time an explicit wait waits for something on the page (seconds). */
+    public static int uiTimeoutSeconds() {
+        return Integer.parseInt(read("ui.timeoutSeconds", "SHOPLAB_UI_TIMEOUT_SECONDS", "10"));
+    }
+
     private static String read(String systemProperty, String envVariable, String defaultValue) {
         String value = System.getProperty(systemProperty);
         if (value == null || value.isBlank()) {

@@ -24,7 +24,7 @@ shoplab/
 ├── backend/             REST API: Java 21, Spring Boot 4, Spring Data JPA, PostgreSQL, Flyway.
 ├── tests/               Automated tests (separate Maven module, talks to the running stack over HTTP).
 │                        Step 3: API tests (JUnit 5, REST Assured, AssertJ, Allure). Step 4: DB tests (JDBC).
-│                        Later: Selenium + Cucumber.
+│                        Step 5: UI tests (Selenium 4 + Cucumber 7 + JUnit 5 suite, Page Objects).
 ├── docker-compose.yml   postgres + backend + frontend with one command.
 ├── .github/workflows/   (step 7) CI: start stack, run tests, publish Allure to GitHub Pages.
 └── pom.xml              Maven aggregator: lists the modules (backend, later tests).
@@ -105,8 +105,23 @@ then run `ShopLabApplication` with JDK 21. Defaults in `application.yml` point t
 - Tests are independent: cart/order tests register a **fresh user per test** (`TestUsers.registerNew()`);
   stock checks compare with the value read before the action, not with a fixed number.
 - Money: `BigDecimal` + `isEqualByComparingTo("79.98")`. No hard-coded future dates (`Cards.futureExpiry()`).
-- Tags: `api`, `db`, `smoke`, `slow`. Run: `mvn -pl tests test`, `mvn -pl tests test -Dgroups=smoke`.
-- UI tests (step 5): Page Object Model + Cucumber step definitions, always.
+- Tags: `api`, `db`, `ui`, `smoke`, `slow` (+ UI feature tags `catalog`, `auth`, `cart`, `checkout`, `orders`).
+  Run: `mvn -pl tests test`, `-Dgroups=smoke`, `-DexcludedGroups=ui`, `"-Dgroups=ui & smoke"`.
+- UI tests (`ui/`): ALWAYS Page Object Model + Cucumber step definitions.
+  - `resources/features/*.feature` (Gherkin, English, declarative); `ui/RunCucumberTest` = `@Suite(failIfNoTests=false)`,
+    `@SelectPackages("features")`, glue `com.shoplab.tests.ui`, plugins pretty + `target/cucumber-report.html` + Allure.
+    Cucumber 7.x (not 8: needs JUnit 6; Allure plugin is `allure-cucumber7-jvm`).
+  - `ui/pages/*`: extend `BasePage`; locators only `testId("...")` (`[data-testid=...]`), found fresh each time (no PageFactory);
+    no asserts in pages; only explicit waits (no sleep, no implicit wait); an action method returns when the site finished
+    (toast / `redrawsPage(...)` = staleness of `#app > *` / route `body[data-page]`). Components: `HeaderComponent`, `ConfirmModal`.
+  - `ui/steps/*Steps`: short (page call + AssertJ), constructor gets `UiContext` (PicoContainer, one per scenario:
+    lazy driver, customer, orderNumber). `ui/hooks/Hooks`: `@BeforeAll` health + DB reset; `@After` screenshot/URL/HTML
+    on failure, then quit. One fresh Chrome per scenario.
+  - Arrange via API, verify via UI: `Given I am logged in as a new customer` = `TestUsers.registerNew()` + token into
+    localStorage `shoplab_token` (`BrowserSession`); `my cart contains:` / `I have placed an order` use API clients.
+    Product titles in Gherkin → id via `ProductCatalog`.
+  - Config: `-Dui.url` / `SHOPLAB_UI_URL` (default `http://localhost:3000`), `-Dui.headless=true` / `SHOPLAB_UI_HEADLESS`
+    (default false), `-Dui.timeoutSeconds` (10). Chrome via Selenium Manager (no driver in repo).
 
 ## API summary (`/api`)
 
@@ -149,7 +164,7 @@ then run `ShopLabApplication` with JDK 21. Defaults in `application.yml` point t
       orders (positive + negative); reset DB before tests.
 - [x] **Step 4: Database tests (JDBC).** Small DB helper; verify that API actions change the DB correctly
       (password hashed, order rows + totals, stock decrease/restore, cart emptied).
-- [ ] **Step 5: UI tests: Selenium + Cucumber + JUnit 5.** Feature files in Gherkin, step definitions, Page Objects,
+- [x] **Step 5: UI tests: Selenium + Cucumber + JUnit 5.** Feature files in Gherkin, step definitions, Page Objects,
       WebDriver factory (Chrome, headless option), explicit waits, hooks (screenshot on failure → Allure), tags.
 - [ ] **Step 6: Allure reports.** Steps, attachments, categories, environment info; run locally with `allure serve`.
 - [ ] **Step 7: CI (GitHub Actions).** On push/PR: `docker compose up`, wait for health, run tests,
